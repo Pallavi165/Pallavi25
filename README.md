@@ -1,65 +1,97 @@
-**EvenTiamo – College Event Management System**
-**Overview**
+# ✦ EvenTiamo — College Event Management System
 
-EvenTiamo is a web-based Event Management System developed to simplify and centralize event organization within academic institutions. It eliminates fragmented communication methods such as paper notices, emails, and social media by providing a single platform for event creation, registration, payment, and communication. The system enhances student engagement while reducing administrative workload.
+![EvenTiamo Banner](images/hero.jpg)
 
-**Objectives**
+**EvenTiamo** is a modern, web-based College Event Management System designed to centralize and elevate campus festival organization, student registrations, instant digital QR pass ticketing, and gate check-in workflows.
 
--Centralize all college event information
+---
 
--Automate event registration and notifications
+## ✨ Key Features & Capabilities
 
--Improve student participation and accessibility
+### 🎓 Student Experience
+- **Live Event Discovery**: Browse campus festivals, music concerts, cultural galas, and fashion showcases with real-time seat capacity bars and category filtering.
+- **Instant Digital QR Passes**: Immediate visual e-ticket generation upon registration with unique Ticket ID (e.g. `ET-FUS-7821`).
+- **1-Click Calendar Export**: Add events directly to Google Calendar or download `.ics` calendar passes for Apple Calendar & Outlook.
+- **Interactive Lineup & Timelines**: Full schedule breakdown, countdown clocks, directions to venues, and event FAQ accordions.
+- **Lightbox Gallery**: High-resolution campus life photo gallery with modal zoom viewer.
 
--Reduce manual effort for organizers
+### 🔐 Organizer & Admin Intelligence Console
+- **Session-Authenticated Dashboard**: Secure login via Admin PIN (`9999`) with session persistence.
+- **Live Attendance KPI Cards**: Real-time counts for Total Registrations, Verified Check-Ins, Turnout Rate %, and Active Events.
+- **Interactive Visual Analytics**:
+  - Doughnut Chart: Checked-In vs Pending ratio.
+  - Bar Chart: Event-wise registration turnout comparison.
+- **Event Creator**: Dynamically create new campus events and competitions.
+- **Attendee Directory**: Real-time search by name, email, department, or ticket ID with multi-status filters.
+- **Digital Certificate of Participation**: Instant generation and printing of verified participation certificates for attendees.
+- **One-Click CSV Export**: Download the full attendee directory with timestamps and check-in statuses.
 
--Ensure secure and efficient data handling
+### 🎫 Gate Check-In QR Scanner
+- **Fast Camera Scanner**: Mobile-optimized viewfinder supporting camera flipping (Rear/Front).
+- **Audio Feedback**: Synthesized Web Audio chimes for successful check-ins and warning buzzes for duplicate/invalid passes.
+- **Attendee Verification Card**: Instant display of attendee name, student ID/department, event name, and check-in time.
+- **Manual Fallback**: Quick ticket lookup for attendees without camera access.
+- **Live Check-In Stream**: Real-time feed of scanned attendees during entry rush.
 
-**User Roles**
+---
 
--Administrator: Approves events, manages system operations, and oversees data lifecycle
+## 🏛️ System Architecture
 
--Participant (Student): Browses events, registers, makes payments, and receives notifications
+EvenTiamo operates on a resilient **Hybrid 3-Tier Architecture**:
 
-**Key Features**
+1. **Presentation Layer**: HTML5, CSS3 (Obsidian Gold Glassmorphism Design System), JavaScript ES6+.
+2. **Business Logic & State Layer**: 
+   - `EvenTiamoStore` client-side offline/demo synchronization with `localStorage`.
+   - Web Audio API for gate audio feedback.
+   - SVG/Canvas QR Code & Certificate Generator engines.
+3. **Backend & Cloud Layer**:
+   - Google Apps Script webhooks for spreadsheet sync and email dispatch.
 
--Event Management: Create, update, cancel events with real-time updates
+---
 
--Registration & Payment: Online registration, secure payment gateway, capacity tracking, and waitlist support
+## 🚀 Quick Start & Local Usage
 
--Notifications: Instant confirmation emails, pre-event reminders, and update alerts
+1. Open `index.html` in any modern web browser, or launch a local web server:
+   ```bash
+   # Using Python
+   python -m http.server 8000
 
--Check-in & Certification: QR-code based check-in and digital certificate generation
+   # Or using Node.js
+   npx serve .
+   ```
+2. Navigate to `http://localhost:8000`.
 
--Data Maintenance: Automatic deletion of event data 30 days after completion
+### 🔑 Default Credentials
+- **Admin Dashboard**: `admin.html`
+- **Default Admin PIN**: `9999`
 
-**System Architecture**
+---
 
-The system follows a Three-Tier Architecture:
+## 📁 Project Structure
 
--Presentation Layer: HTML, CSS, JavaScript (responsive UI)
+```
+EvenTiamo/
+├── index.html         # Main Landing Page (Hero, Event Grid, Features, Gallery)
+├── fusion.html        # Fusion 2K24 Event Details & Registration
+├── ethnic.html        # Ethnic Utsav Cultural Gala Details & Registration
+├── glam.html          # Glam Icon Fashion Show Details & Registration
+├── admin.html         # Organizer Admin Dashboard & Analytics
+├── checkin.html       # Mobile Gate QR Scanner Portal
+├── style.css          # Master Obsidian Gold & Glassmorphic CSS Design System
+├── script.js          # Unified Frontend Logic, Ticketing & Store Engine
+├── admin.js           # Admin Dashboard Controller & Chart.js Visualizer
+├── images/            # Extracted Event Assets & Photography
+│   ├── hero.jpg
+│   ├── fusion.jpg
+│   ├── ethnic.jpg
+│   ├── glam.jpg
+│   ├── dj.jpg
+│   └── ...
+└── README.md          # Project Documentation
+```
 
--Business Logic Layer: JavaScript / Google Apps Script
+---
 
--Data Layer: Google Sheets and Google Drive
-
-**Non-Functional Highlights**
-
--Performance: Fast response time and concurrent user handling
-
--Security: HTTPS, encrypted data storage, role-based access control
-
--Usability: Responsive design with accessible UI
-
--Reliability: 99.5% availability with daily backups
-
-**Limitations**
--Dependent on third-party email and payment services
-
--Requires continuous internet connectivity
-
--Limited UI customization in the initial version
-
-**Conclusion**
-
-EvenTiamo modernizes college event management by providing a centralized, automated, and user-friendly platform. It improves communication, boosts participation, and offers a scalable solution aligned with the evolving needs of academic institutions.
+## 🛡️ License & Credits
+Developed for academic institutions and campus life empowerment.  
+© 2025 EvenTiamo. All rights reserved.

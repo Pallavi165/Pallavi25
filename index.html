@@ -1,111 +1,278 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EvenTiamo</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="EvenTiamo — Centralized College Event Management System for festival registration, instant digital QR tickets, student passes, and organizer check-in.">
+  <meta name="theme-color" content="#070709">
+  <title>EvenTiamo — Campus Events You'll Love</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
 </head>
 
 <body>
 
 <!-- ================= NAVBAR ================= -->
-<nav class="navbar">
-    <div class="logo">EvenTiamo</div>
-    <ul class="nav-links">
-        <li><a href="#hero">Home</a></li>
-        <li><a href="#events">Events</a></li>
-        <li><a href="#about">About</a></li>
-        <li><a href="#gallery">Gallery</a></li>
-    </ul>
-</nav>
-
-<!-- ================= HERO SECTION ================= -->
-<header id="hero" class="hero">
-    <div class="hero-overlay"></div>
-    <div class="hero-content animate-fade-up">
-        <h1 class="hero-title">EvenTiamo</h1>
-        <p class="hero-sub">Events you'll Love</p>
-        <a href="#events" class="hero-btn">Explore Events</a>
+<header>
+  <nav class="navbar">
+    <div class="logo">
+      <a href="#hero"><span>✦</span> EvenTiamo</a>
     </div>
+
+    <ul class="nav-links">
+      <li><a href="#hero">Home</a></li>
+      <li><a href="#events">Events</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#gallery">Gallery</a></li>
+    </ul>
+
+    <div class="nav-actions">
+      <button class="btn-secondary btn-sm" onclick="openMyPassesModal()" title="Retrieve your registered QR tickets">🎫 My Passes</button>
+      <a href="checkin.html" class="btn-secondary btn-sm" title="Scan QR Code Ticket">📷 Scanner</a>
+      <a href="admin.html" class="btn btn-sm" title="Organizer Admin Dashboard">🔐 Admin</a>
+      <button class="nav-toggle" aria-label="Toggle navigation menu">☰</button>
+    </div>
+  </nav>
 </header>
 
+<!-- ================= HERO SECTION ================= -->
+<section id="hero" class="hero">
+  <div class="hero-overlay"></div>
+  <div class="hero-content animate-fade-up">
+    <div class="hero-badge">
+      <span class="pill pill-live">Campus Fests 2025 • Registrations Live</span>
+    </div>
+    
+    <h1 class="hero-title">
+      Campus Events <br>
+      <span class="highlight">You'll Truly Love</span>
+    </h1>
+    
+    <p class="hero-sub">
+      Discover, register, and experience vibrant campus festivals, concerts, and competitions with instant digital QR passes and verified attendance certificates.
+    </p>
+
+    <div class="hero-buttons">
+      <a href="#events" class="cta-primary">✨ Explore Live Events</a>
+      <button onclick="openMyPassesModal()" class="cta-ghost">🎫 My Registered Passes</button>
+    </div>
+
+    <!-- Animated Dynamic Campus Stats -->
+    <div class="hero-stats">
+      <div class="stat-item">
+        <span class="stat-num">5,000+</span>
+        <span class="stat-label">Students Engaged</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">100%</span>
+        <span class="stat-label">Instant QR Passes</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">Live</span>
+        <span class="stat-label">Real-Time Seat Tracking</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">99.8%</span>
+        <span class="stat-label">Satisfaction Score</span>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ================= EVENTS SECTION ================= -->
-<section class="section events" id="events">
-  <h2 class="section-title animate-fade-up">Upcoming Events</h2>
-
-  <div class="event-grid">
-
-    <!-- Fusion 2K24 -->
-    <div class="event-card animate-zoom-in">
-      <img src="images/fusion.jpg" alt="Fusion 2K24">
-      <h3>Fusion 2K24</h3>
-      <p>Department of Management · Oct 24</p>
-      <a href="fusion.html" class="btn">Know More</a>
+<section class="section" id="events">
+  <div class="section-inner">
+    <div class="section-header animate-fade-up">
+      <span class="section-subtitle">Happening On Campus</span>
+      <h2 class="section-title">Upcoming Grand Events</h2>
+      <p class="section-desc">Managed directly by college organizers with instant seat tracking and automated QR ticketing.</p>
     </div>
 
-    <!-- Ethnic Utsav -->
-    <div class="event-card animate-zoom-in delay">
-      <img src="images/ethnic.jpg" alt="Ethnic Utsav">
-      <h3>Ethnic Utsav</h3>
-      <p>Explore Cultures · Nov 15</p>
-      <a href="ethnic.html" class="btn">Know More</a>
+    <!-- Category Filters -->
+    <div class="event-filters">
+      <button class="filter-btn active" data-category="all">All Events</button>
+      <button class="filter-btn" data-category="music">🎵 Music & Concerts</button>
+      <button class="filter-btn" data-category="cultural">🎭 Cultural & Heritage</button>
+      <button class="filter-btn" data-category="fashion">✨ Fashion & Glamour</button>
+      <button class="filter-btn" data-category="tech">💻 Tech & Hackathons</button>
     </div>
 
-    <!-- Glam Icon -->
-    <div class="event-card animate-zoom-in delay-2">
-      <img src="images/glam.jpg" alt="Glam Icon">
-      <h3>Glam Icon</h3>
-      <p>Glam Continues · Dec 10</p>
-      <a href="glam.html" class="btn">Know More</a>
+    <!-- Live Search -->
+    <div class="search-bar-wrapper">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="eventSearch" class="search-bar" placeholder="Search events by name, club, or keyword...">
     </div>
 
+    <!-- Events Grid (Rendered dynamically by EventManager) -->
+    <div class="event-grid">
+      <!-- Injected dynamically via renderDynamicHomepageEvents() in script.js -->
+    </div>
+  </div>
+</section>
+
+<!-- ================= FEATURES SECTION ================= -->
+<section id="features" class="section" style="background: rgba(255,255,255,0.01);">
+  <div class="section-inner">
+    <div class="section-header animate-fade-up">
+      <span class="section-subtitle">Why EvenTiamo</span>
+      <h2 class="section-title">Unified Campus Experience</h2>
+      <p class="section-desc">Designed from the ground up for student life empowerment and organizer control.</p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card animate-zoom-in">
+        <div class="feature-icon">⚡</div>
+        <h3 class="feature-title">Instant QR Passes</h3>
+        <p class="feature-desc">Generate secure digital passes with dynamic QR codes immediately upon registering, exportable to Apple and Google Calendar.</p>
+      </div>
+
+      <div class="feature-card animate-zoom-in delay-1">
+        <div class="feature-icon">🔐</div>
+        <h3 class="feature-title">Organizer Control</h3>
+        <p class="feature-desc">Dedicated admin portal allowing organizers to create, edit, modify, and delete campus events in real-time.</p>
+      </div>
+
+      <div class="feature-card animate-zoom-in delay-2">
+        <div class="feature-icon">📷</div>
+        <h3 class="feature-title">Fast Gate Check-In</h3>
+        <p class="feature-desc">Mobile-optimized camera scanner verifies student entries in milliseconds with audio and visual feedback.</p>
+      </div>
+
+      <div class="feature-card animate-zoom-in delay-3">
+        <div class="feature-icon">📜</div>
+        <h3 class="feature-title">Digital Certificates</h3>
+        <p class="feature-desc">Automated verified digital certificates of participation for all checked-in attendees to boost academic portfolios.</p>
+      </div>
+    </div>
   </div>
 </section>
 
 <!-- ================= ABOUT SECTION ================= -->
-<section id="about" class="section about">
+<section id="about" class="section">
+  <div class="section-inner">
     <div class="about-inner animate-fade-up">
-        <h2 class="section-title">About Us</h2>
-        <p class="about-text">
-            EvenTiamo brings together unforgettable campus experiences — from cultural festivals 
-            to management events and fashion showcases. Our goal is to build a community through 
-            creativity, celebration, and collaboration.
-        </p>
+      <span class="section-subtitle">Our Vision</span>
+      <h2 class="section-title">Elevating Campus Culture</h2>
+      <p class="about-text">
+        EvenTiamo eliminates cluttered noticeboards, chaotic email chains, and manual sign-up sheets. We provide a single, unified digital hub for students to discover passion-driven experiences and for college committees to orchestrate flawless events.
+      </p>
+      <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;">
+        <a href="#events" class="btn">View All Events</a>
+        <button onclick="openMyPassesModal()" class="btn-secondary">Check My Passes</button>
+        <a href="admin.html" class="btn-secondary">Admin Login</a>
+      </div>
     </div>
+  </div>
 </section>
 
 <!-- ================= GALLERY SECTION ================= -->
-<section id="gallery" class="section">
-    <h2 class="section-title animate-fade-up">Gallery</h2>
+<section id="gallery" class="section" style="background: rgba(255,255,255,0.01);">
+  <div class="section-inner">
+    <div class="section-header animate-fade-up">
+      <span class="section-subtitle">Moments Captured</span>
+      <h2 class="section-title">Campus Life Gallery</h2>
+      <p class="section-desc">Relive the unforgettable moments, music, and energy from past EvenTiamo events.</p>
+    </div>
 
     <div class="gallery-grid">
+      <div class="gallery-item animate-zoom-in">
+        <img class="gallery-img" src="images/dj.jpg" alt="Live DJ Performance" loading="lazy">
+        <div class="gallery-overlay">Live DJ Night & Laser Show</div>
+      </div>
 
-        <img class="gallery-img animate-zoom" 
-             src="https://images.unsplash.com/photo-1521336575822-6da63fb45455?q=80&w=1200" 
-             alt="Event Photo">
+      <div class="gallery-item animate-zoom-in delay-1">
+        <img class="gallery-img" src="images/past1.jpeg" alt="Cultural Dance Fest" loading="lazy">
+        <div class="gallery-overlay">Traditional Folk Fest Showcase</div>
+      </div>
 
-        <img class="gallery-img animate-zoom delay1" 
-             src="https://images.unsplash.com/photo-1506784983877-45594efa4cbe?q=80&w=1200" 
-             alt="Stage">
+      <div class="gallery-item animate-zoom-in delay-2">
+        <img class="gallery-img" src="images/past2.jpg" alt="Concert Stage Lighting" loading="lazy">
+        <div class="gallery-overlay">Main Stage Sound & Light Show</div>
+      </div>
 
-        <img class="gallery-img animate-zoom delay2"
-             src="https://images.unsplash.com/photo-1531058020387-3be344556be6?q=80&w=1200" 
-             alt="Crowd">
+      <div class="gallery-item animate-zoom-in delay-3">
+        <img class="gallery-img" src="images/past3.jpeg" alt="Auditorium Crowd" loading="lazy">
+        <div class="gallery-overlay">Packed Campus Auditorium Crowd</div>
+      </div>
 
-        <img class="gallery-img animate-zoom delay3"
-             src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=1200" 
-             alt="Culture">
+      <div class="gallery-item animate-zoom-in">
+        <img class="gallery-img" src="images/321.jpg" alt="Student Performances" loading="lazy">
+        <div class="gallery-overlay">Student Band Showcase</div>
+      </div>
 
+      <div class="gallery-item animate-zoom-in delay-1">
+        <img class="gallery-img" src="images/546.jpg" alt="Ethnic Celebration Art" loading="lazy">
+        <div class="gallery-overlay">Ethnic Utsav Celebrations</div>
+      </div>
+
+      <div class="gallery-item animate-zoom-in delay-2">
+        <img class="gallery-img" src="images/852.jpg" alt="Fashion Gala Ramp" loading="lazy">
+        <div class="gallery-overlay">Glam Icon Ramp Walk</div>
+      </div>
+
+      <div class="gallery-item animate-zoom-in delay-3">
+        <img class="gallery-img" src="images/hero.jpg" alt="Campus Fest Crowd" loading="lazy">
+        <div class="gallery-overlay">EvenTiamo Annual Fest Finale</div>
+      </div>
     </div>
+  </div>
 </section>
 
 <!-- ================= FOOTER ================= -->
 <footer class="footer">
-    © 2025 EvenTiamo · info@eventiamo.com
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="logo"><span>✦</span> EvenTiamo</div>
+      <p class="footer-desc">
+        Centralized College Event Management System. Empowering students and organizers with seamless event ticketing, registration, and attendance tracking.
+      </p>
+    </div>
+
+    <div class="footer-col">
+      <h4>Student Portals</h4>
+      <ul>
+        <li><a href="javascript:void(0)" onclick="openMyPassesModal()">🎫 My Registered Passes</a></li>
+        <li><a href="#events">Explore Live Events</a></li>
+        <li><a href="#gallery">Media Gallery</a></li>
+        <li><a href="#features">Platform Features</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-col">
+      <h4>Organizer Portals</h4>
+      <ul>
+        <li><a href="admin.html">🔐 Admin Control Console</a></li>
+        <li><a href="checkin.html">📷 Gate QR Scanner</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-col">
+      <h4>Contact</h4>
+      <ul>
+        <li><span class="text-muted">📧 info@eventiamo.com</span></li>
+        <li><span class="text-muted">📞 +91 (80) 2345-6789</span></li>
+        <li><span class="text-muted">📍 Student Activity Center</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <div>© 2025 EvenTiamo. Built for Academic Institutions & Campus Life.</div>
+    <div>
+      <a href="admin.html" class="text-gold" style="font-weight:600;">🔐 Organizer Admin Portal</a>
+    </div>
+  </div>
 </footer>
 
-<script src="script.js"></script>
+<!-- Lightbox Modal -->
+<div id="modal" aria-hidden="true">
+  <div id="modal-content">
+    <button id="modal-close" aria-label="Close modal">✕</button>
+    <img id="modal-img" alt="Enlarged Event Image">
+    <div id="modal-caption"></div>
+  </div>
+</div>
 
 </body>
 </html>

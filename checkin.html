@@ -1,142 +1,461 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>EvenTiamo – QR Scanner</title>
-
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-
-<style>
-    body {
-        background:#0A0A0A;
-        margin:0;
-        padding:0;
-        font-family: 'Inter', Arial, sans-serif;
-        color:white;
-        overflow-x:hidden;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="EvenTiamo Gate Check-in & QR Ticket Scanner. Instant student pass verification with audio cues and real-time attendance logs.">
+  <title>EvenTiamo — QR Gate Check-In</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="script.js" defer></script>
+  <style>
+    .scanner-page-container {
+      max-width: 520px;
+      margin: 86px auto 60px;
+      padding: 0 16px;
     }
-    .topbar {
-        width:100%;
-        padding:15px;
-        text-align:center;
-        background:#111;
-        font-size:20px;
-        font-weight:600;
-        color:gold;
-        box-shadow:0 0 10px rgba(0,0,0,0.5);
-        position:sticky;
-        top:0;
-        z-index:99;
+
+    .scanner-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-gold);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow-lg), var(--gold-glow-subtle);
+      text-align: center;
     }
+
     #reader {
-        width:100%;
-        max-width:360px;
-        margin:25px auto 10px auto;
-        border-radius:12px;
-        overflow:hidden;
-        box-shadow:0px 0px 20px rgba(255,255,255,0.15);
+      width: 100%;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      border: 2px dashed rgba(243, 207, 85, 0.4);
+      background: #000;
+      position: relative;
+      margin: 16px 0;
     }
-    .field {
-        width:90%;
-        max-width:340px;
-        padding:14px;
-        border-radius:10px;
-        border:1px solid #333;
-        background:#000;
-        color:white;
-        font-size:16px;
-        margin:10px auto;
-        display:block;
+
+    .scanner-controls {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
     }
-    .btn {
-        width:90%;
-        max-width:340px;
-        padding:14px;
-        background:gold;
-        color:black;
-        border:none;
-        border-radius:10px;
-        font-size:17px;
-        font-weight:bold;
-        margin:10px auto;
-        display:block;
-        cursor:pointer;
+
+    .manual-entry-box {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-subtle);
     }
-    #result {
-        margin:20px auto;
-        width:90%;
-        max-width:340px;
-        padding:18px;
-        border-radius:12px;
-        font-size:18px;
-        text-align:center;
-        display:none;
+
+    /* Verification Result Card */
+    #resultCard {
+      display: none;
+      margin-top: 20px;
+      padding: 20px;
+      border-radius: var(--radius-md);
+      text-align: left;
+      animation: zoomIn 0.3s ease forwards;
     }
-</style>
+
+    #resultCard.success {
+      display: block;
+      background: rgba(16, 185, 129, 0.12);
+      border: 2px solid #10b981;
+    }
+
+    #resultCard.error {
+      display: block;
+      background: rgba(239, 68, 68, 0.12);
+      border: 2px solid #ef4444;
+    }
+
+    #resultCard.duplicate {
+      display: block;
+      background: rgba(245, 158, 11, 0.12);
+      border: 2px solid #f59e0b;
+    }
+
+    .result-badge {
+      display: inline-block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    /* Recent Scans Log */
+    .recent-scans {
+      margin-top: 28px;
+      text-align: left;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 18px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .recent-scans-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--accent-gold);
+    }
+
+    .recent-scans-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .recent-scan-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: var(--radius-sm);
+    }
+  </style>
 </head>
 
 <body>
 
-<div class="topbar">🎫 EvenTiamo Check-In</div>
+  <!-- ================= NAVBAR ================= -->
+  <header>
+    <nav class="navbar">
+      <div class="logo">
+        <a href="index.html"><span>✦</span> EvenTiamo</a>
+      </div>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="index.html#events">Events</a></li>
+        <li><a href="admin.html">🔐 Admin Dashboard</a></li>
+      </ul>
+      <div class="nav-actions">
+        <a href="admin.html" class="btn btn-sm">Admin Panel</a>
+        <button class="nav-toggle" aria-label="Toggle navigation menu">☰</button>
+      </div>
+    </nav>
+  </header>
 
-<div id="reader"></div>
+  <!-- ================= SCANNER CONTAINER ================= -->
+  <main class="scanner-page-container">
+    <div class="scanner-card">
+      <div class="pill pill-live">Gate Scanner Portal</div>
+      <h1 style="font-size: 1.8rem; margin: 10px 0 4px;">Ticket QR Scanner</h1>
+      <p class="small-muted">Align the attendee's QR ticket within the camera frame.</p>
 
-<input id="ticketId" class="field" placeholder="Enter Ticket ID manually">
-<button class="btn" onclick="checkTicket()">Check In</button>
+      <!-- Scanner Controls -->
+      <div class="scanner-controls" style="margin-top: 14px;">
+        <button id="cameraToggleBtn" class="btn-secondary btn-sm" onclick="toggleCameraFacing()">🔄 Switch Camera</button>
+        <button id="restartScannerBtn" class="btn-secondary btn-sm" onclick="restartScanner()">⚡ Re-focus</button>
+      </div>
 
-<div id="result"></div>
+      <!-- Viewfinder -->
+      <div id="reader"></div>
 
-<script>
-const API_URL = "https://script.google.com/macros/s/AKfycbx522tu-XcrE1Nv9aYGlQUhHnip27oYCHPUTiSqpT3-SUCAuiNDfejAxW9W2WsbnKUrDw/exec";
+      <!-- Audio Status -->
+      <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 12px;">
+        🔊 Audio Chime Active • Instant Offline Verification
+      </div>
 
-window.onload = function () {
-    let qrBoxSize = Math.min(window.innerWidth * 0.75, 280);
-    const scanner = new Html5Qrcode("reader");
+      <!-- Result Card -->
+      <div id="resultCard">
+        <div id="resultBadge" class="result-badge"></div>
+        <h3 id="resultTitle" style="font-size: 1.25rem; margin-bottom: 4px;"></h3>
+        <div id="resultMeta" class="small-muted" style="line-height: 1.5;"></div>
+      </div>
 
-    scanner.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: qrBoxSize },
-        (qrMessage) => {
-            checkTicket(qrMessage);
+      <!-- Manual Ticket Entry Fallback -->
+      <div class="manual-entry-box">
+        <label style="display:block;font-size:0.85rem;color:var(--text-secondary);font-weight:600;margin-bottom:8px;">
+          Or Enter Ticket ID Manually:
+        </label>
+        <form onsubmit="handleManualCheckin(event)" style="display:flex;gap:8px;">
+          <input id="manualTicketInput" type="text" placeholder="e.g. ET-FUS-7821" style="flex:1;padding:10px 14px;border-radius:var(--radius-sm);border:1px solid var(--border-subtle);background:rgba(0,0,0,0.5);color:#fff;font-family:monospace;text-transform:uppercase;" />
+          <button type="submit" class="btn btn-sm">Verify</button>
+        </form>
+      </div>
+
+      <!-- Recent Scans Stream -->
+      <div class="recent-scans">
+        <div class="recent-scans-header">
+          <span>📋 Recent Verified Attendees</span>
+          <span id="scanCounter" class="pill" style="font-size:0.75rem;">0 Scanned</span>
+        </div>
+        <ul id="recentScansList" class="recent-scans-list">
+          <li style="color:var(--text-muted);font-size:0.82rem;text-align:center;padding:10px;">No scans recorded in this session yet.</li>
+        </ul>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const CHECKIN_API_URL = "https://script.google.com/macros/s/AKfycbx522tu-XcrE1Nv9aYGlQUhHnip27oYCHPUTiSqpT3-SUCAuiNDfejAxW9W2WsbnKUrDw/exec";
+
+    let html5QrCode = null;
+    let currentFacingMode = "environment";
+    let isScanning = false;
+    let scannedCount = 0;
+
+    // ==========================================
+    // 1. SYNTHESIZED WEB AUDIO API FEEDBACK
+    // ==========================================
+    function playSuccessChime() {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        
+        // Two-tone rising harmony chime (587.33Hz D5 -> 880Hz A5)
+        const now = ctx.currentTime;
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc1.type = "sine";
+        osc1.frequency.setValueAtTime(587.33, now);
+        osc1.frequency.exponentialRampToValueAtTime(880, now + 0.15);
+
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+
+        osc1.connect(gain);
+        gain.connect(ctx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.35);
+
+        if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
+      } catch (e) {}
+    }
+
+    function playErrorBuzz() {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        const now = ctx.currentTime;
+
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.linearRampToValueAtTime(100, now + 0.3);
+
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.3);
+
+        if (navigator.vibrate) navigator.vibrate(300);
+      } catch (e) {}
+    }
+
+    // ==========================================
+    // 2. SCANNER INITIALIZATION
+    // ==========================================
+    function initScanner() {
+      if (html5QrCode) {
+        try {
+          html5QrCode.stop().catch(() => {}).then(() => startScannerInstance());
+          return;
+        } catch (e) {}
+      }
+      startScannerInstance();
+    }
+
+    function startScannerInstance() {
+      html5QrCode = new Html5Qrcode("reader");
+      const config = {
+        fps: 12,
+        qrbox: { width: 240, height: 240 },
+        aspectRatio: 1.0
+      };
+
+      html5QrCode.start(
+        { facingMode: currentFacingMode },
+        config,
+        (decodedText) => {
+          handleTicketVerification(decodedText);
         },
-        (err) => {}
-    )
-    .catch(err => {
-        alert("Please allow camera permission.");
-        console.log(err);
-    });
-};
+        (error) => {}
+      ).then(() => {
+        isScanning = true;
+      }).catch(err => {
+        console.warn("Camera init failed:", err);
+      });
+    }
 
-async function checkTicket(autoVal = null) {
-    const ticket = autoVal || document.getElementById("ticketId").value.trim();
-    const box = document.getElementById("result");
+    function toggleCameraFacing() {
+      currentFacingMode = currentFacingMode === "environment" ? "user" : "environment";
+      restartScanner();
+    }
 
-    if (!ticket) return alert("Enter Ticket ID");
+    function restartScanner() {
+      if (html5QrCode) {
+        html5QrCode.stop().then(() => {
+          startScannerInstance();
+        }).catch(() => {
+          startScannerInstance();
+        });
+      } else {
+        startScannerInstance();
+      }
+    }
 
-    box.style.display = "block";
-    box.style.background = "#222";
-    box.textContent = "Checking…";
+    // ==========================================
+    // 3. TICKET VERIFICATION LOGIC
+    // ==========================================
+    let lastScannedTicket = null;
+    let scanThrottle = false;
 
-    try {
-        const res = await fetch(API_URL + "?ticket=" + ticket);
-        const data = await res.json();
+    async function handleTicketVerification(ticketId) {
+      const cleanTicket = (ticketId || "").toString().trim().toUpperCase();
+      if (!cleanTicket || scanThrottle) return;
 
-        if (!data.success) {
-            box.style.background = "#7a0000";
-            box.textContent = "❌ " + data.error;
-            return;
+      scanThrottle = true;
+      setTimeout(() => { scanThrottle = false; }, 2500);
+
+      const resultCard = document.getElementById("resultCard");
+      const resultBadge = document.getElementById("resultBadge");
+      const resultTitle = document.getElementById("resultTitle");
+      const resultMeta = document.getElementById("resultMeta");
+
+      // Check Local Store First
+      const localRecord = EvenTiamoStore.getAll().find(r => (r.ticket || r.id).toUpperCase() === cleanTicket);
+
+      if (localRecord) {
+        if (localRecord.status === "Checked") {
+          // Already Checked In (Duplicate Warning)
+          playErrorBuzz();
+          resultCard.className = "duplicate";
+          resultBadge.textContent = "⚠️ Already Checked In";
+          resultBadge.style.background = "#f59e0b";
+          resultBadge.style.color = "#000";
+          resultTitle.textContent = localRecord.name;
+          resultMeta.innerHTML = `
+            <strong>Event:</strong> ${localRecord.event}<br>
+            <strong>Ticket ID:</strong> ${localRecord.ticket || localRecord.id}<br>
+            <span style="color:#f59e0b;">Warning: This pass was already scanned.</span>
+          `;
+          return;
         }
 
-        box.style.background = "#004d00";
-        box.textContent = "✅ Check-In Successful!";
+        // Valid Check-In!
+        EvenTiamoStore.updateStatus(cleanTicket, "Checked");
+        playSuccessChime();
+        scannedCount++;
+        document.getElementById("scanCounter").textContent = `${scannedCount} Scanned`;
 
-    } catch (err) {
-        box.style.background = "#7a0000";
-        box.textContent = "❌ Network Error";
+        resultCard.className = "success";
+        resultBadge.textContent = "✅ Entry Verified";
+        resultBadge.style.background = "#10b981";
+        resultBadge.style.color = "#000";
+        resultTitle.textContent = localRecord.name;
+        resultMeta.innerHTML = `
+          <strong>Event:</strong> ${localRecord.event}<br>
+          <strong>Dept / ID:</strong> ${localRecord.dept || localRecord.studentId || "Student"}<br>
+          <strong>Ticket ID:</strong> ${cleanTicket}<br>
+          <strong>Time:</strong> ${new Date().toLocaleTimeString()}
+        `;
+
+        addToRecentLog(localRecord.name, localRecord.event, cleanTicket);
+
+        // Background server sync
+        fetch(CHECKIN_API_URL + "?ticket=" + encodeURIComponent(cleanTicket)).catch(() => {});
+        return;
+      }
+
+      // If not found in local store, query backend API
+      resultCard.className = "";
+      resultCard.style.display = "block";
+      resultCard.style.background = "rgba(255,255,255,0.05)";
+      resultTitle.textContent = "Verifying Ticket...";
+      resultMeta.textContent = `Connecting to server for ${cleanTicket}`;
+
+      try {
+        const res = await fetch(CHECKIN_API_URL + "?ticket=" + encodeURIComponent(cleanTicket));
+        const data = await res.json();
+
+        if (data && data.success) {
+          playSuccessChime();
+          scannedCount++;
+          document.getElementById("scanCounter").textContent = `${scannedCount} Scanned`;
+
+          resultCard.className = "success";
+          resultBadge.textContent = "✅ Check-In Successful";
+          resultBadge.style.background = "#10b981";
+          resultBadge.style.color = "#000";
+          resultTitle.textContent = data.name || "Verified Attendee";
+          resultMeta.innerHTML = `<strong>Ticket:</strong> ${cleanTicket}<br><strong>Event:</strong> ${data.event || "Campus Event"}`;
+
+          addToRecentLog(data.name || "Attendee", data.event || "Event", cleanTicket);
+        } else {
+          playErrorBuzz();
+          resultCard.className = "error";
+          resultBadge.textContent = "❌ Invalid Pass";
+          resultBadge.style.background = "#ef4444";
+          resultBadge.style.color = "#fff";
+          resultTitle.textContent = "Verification Failed";
+          resultMeta.textContent = data && data.error ? data.error : "Ticket ID not found in database.";
+        }
+      } catch (err) {
+        playErrorBuzz();
+        resultCard.className = "error";
+        resultBadge.textContent = "❌ Ticket Not Found";
+        resultBadge.style.background = "#ef4444";
+        resultBadge.style.color = "#fff";
+        resultTitle.textContent = "Unregistered Pass";
+        resultMeta.textContent = `No registration found for Ticket ID ${cleanTicket}.`;
+      }
     }
-}
-</script>
+
+    function handleManualCheckin(e) {
+      e.preventDefault();
+      const input = document.getElementById("manualTicketInput");
+      const val = input.value.trim();
+      if (!val) return;
+      handleTicketVerification(val);
+      input.value = "";
+    }
+
+    function addToRecentLog(name, eventName, ticket) {
+      const list = document.getElementById("recentScansList");
+      if (!list) return;
+
+      if (list.children.length === 1 && list.children[0].textContent.includes("No scans")) {
+        list.innerHTML = "";
+      }
+
+      const li = document.createElement("li");
+      li.className = "recent-scan-item";
+      li.innerHTML = `
+        <div>
+          <strong style="color:#fff;">${name}</strong>
+          <span style="color:var(--text-muted);font-size:0.75rem;display:block;">${eventName} • ${ticket}</span>
+        </div>
+        <span class="admin-badge-checked" style="font-size:0.7rem;">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+      `;
+      list.prepend(li);
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      initScanner();
+    });
+  </script>
 
 </body>
 </html>

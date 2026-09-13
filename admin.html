@@ -3,220 +3,947 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EvenTiamo Admin Dashboard</title>
+  <meta name="description" content="EvenTiamo Organizer & Admin Dashboard — Complete event CRUD controls, attendee analytics, check-in tracking, and certificate generation.">
+  <title>EvenTiamo — Organizer Admin Console</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="script.js" defer></script>
+  <script src="admin.js" defer></script>
   <style>
-    body {
-      background: #0A0A0A;
-      color: white;
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
+    .admin-container {
+      max-width: 1280px;
+      margin: 90px auto 60px;
+      padding: 0 24px;
     }
-    .topbar {
-      background: #111;
-      padding: 16px;
-      text-align: center;
-      font-size: 22px;
-      font-weight: bold;
-      color: gold;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
     }
-    .container {
+
+    /* Tabs Navigation */
+    .admin-tabs {
+      display: flex;
+      gap: 10px;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      padding: 12px 20px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-muted);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: var(--transition);
+    }
+
+    .tab-btn:hover {
+      color: #fff;
+    }
+
+    .tab-btn.active {
+      color: var(--accent-gold);
+      border-bottom-color: var(--accent-gold);
+      background: rgba(243, 207, 85, 0.05);
+      border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeUp 0.3s ease forwards;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* KPI Cards */
+    .admin-kpis {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-card);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--gold-gradient);
+    }
+
+    .kpi-title {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .kpi-value {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .kpi-sub {
+      font-size: 0.8rem;
+      color: var(--text-gold);
+      margin-top: 6px;
+    }
+
+    .events-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .event-stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
       padding: 20px;
     }
-    #loginBox {
-      max-width: 320px;
-      margin: 60px auto;
-      text-align: center;
+
+    .controls-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      margin-bottom: 30px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      align-items: center;
+      justify-content: space-between;
     }
-    #loginBox input {
-      width: 100%;
-      padding: 12px;
-      border-radius: 8px;
-      border: 1px solid #444;
-      background: #000;
+
+    .controls-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      flex: 1;
+    }
+
+    .controls-group input, .controls-group select {
+      padding: 10px 14px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
       color: #fff;
-      margin-bottom: 12px;
-      font-size: 16px;
+      font-size: 0.9rem;
+      min-width: 180px;
     }
-    #loginBox button {
-      padding: 12px 20px;
-      background: gold;
-      color: black;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    #dashboard {
-      display: none;
-    }
-    .stats-grid {
+
+    .charts-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 16px;
-      margin-top: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
+      margin-bottom: 24px;
     }
-    .stat-card {
-      background: #222;
-      padding: 16px;
-      border-radius: 10px;
-      text-align: center;
+
+    .chart-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      min-height: auto;
     }
-    .event-cards {
-      margin-top: 30px;
-    }
-    .event-card {
-      background: #111;
-      padding: 16px;
+
+    .chart-box h3 {
+      font-size: 0.95rem;
+      color: var(--accent-gold);
       margin-bottom: 12px;
-      border-radius: 10px;
-      box-shadow: 0 0 8px rgba(255,255,255,0.1);
+      font-weight: 600;
     }
-    .controls {
-      margin-top: 30px;
-    }
-    .controls input, .controls select {
-      padding: 10px;
-      margin-right: 8px;
-      border-radius: 6px;
-      border: 1px solid #444;
-      background: #000;
-      color: #fff;
-      font-size: 15px;
-    }
-    .controls button {
-      padding: 10px 16px;
-      margin-right: 8px;
-      border: none;
-      border-radius: 6px;
-      background: gold;
-      color: black;
-      font-size: 15px;
-      cursor: pointer;
-      font-weight: bold;
-    }
+
+    /* Table Styles */
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
-    }
-    th, td {
-      padding: 12px 8px;
-      border-bottom: 1px solid #333;
       text-align: left;
-      font-size: 14px;
     }
+
+    th, td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 0.88rem;
+    }
+
     th {
-      background: #111;
-      color: gold;
-      position: sticky;
-      top: 0;
+      background: rgba(14, 14, 20, 0.9);
+      color: var(--accent-gold);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.78rem;
+      letter-spacing: 0.05em;
     }
+
     tr:hover {
-      background: #1a1a1a;
+      background: rgba(255, 255, 255, 0.02);
     }
+
     .action-btn {
       padding: 6px 10px;
-      margin-right: 6px;
       border: none;
       border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
       cursor: pointer;
-      font-size: 13px;
-      font-weight: bold;
+      transition: var(--transition);
+      margin-right: 4px;
+      margin-bottom: 4px;
     }
-    .btn-resend { background: #008cff; color: white; }
-    .btn-force { background: #00cc44; color: white; }
-    .btn-undo { background: #cc0000; color: white; }
 
-    /* Chart container */
-    #charts {
-      margin-top: 40px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 24px;
+    .btn-action-resend { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); }
+    .btn-action-checkin { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+    .btn-action-undo { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+    .btn-action-cert { background: rgba(243, 207, 85, 0.2); color: var(--accent-gold); border: 1px solid var(--border-gold); }
+    .btn-action-edit { background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4); }
+    .btn-action-del { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+    .btn-action-preview { background: rgba(6, 182, 212, 0.2); color: #22d3ee; border: 1px solid rgba(6, 182, 212, 0.4); }
+    .btn-action-clone { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+    .btn-action-publish { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+    .btn-action-draft { background: rgba(251, 146, 60, 0.2); color: #fb923c; border: 1px solid rgba(251, 146, 60, 0.4); }
+    .btn-action-archive { background: rgba(147, 51, 234, 0.2); color: #c084fc; border: 1px solid rgba(147, 51, 234, 0.4); }
+    .btn-action-cancel { background: rgba(244, 63, 94, 0.2); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.4); }
+
+    .action-btn:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.2);
+    }
+
+    /* Modal for Event Creation & Certificate */
+    .admin-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(16px);
+      display: none;
+      align-items: center;
       justify-content: center;
-    }
-    .chart-card {
-      background: #111;
-      padding: 16px;
-      border-radius: 10px;
-      box-shadow: 0 0 8px rgba(255,255,255,0.1);
-      flex: 1 1 300px;
-      min-width: 280px;
-    }
-    canvas {
-      max-width: 100%;
-      height: auto;
+      z-index: 10000;
+      padding: 20px;
+      overflow-y: auto;
     }
 
+    .admin-modal.visible {
+      display: flex;
+    }
+
+    .admin-modal-card {
+      background: #111118;
+      border: 1px solid var(--border-gold);
+      border-radius: var(--radius-lg);
+      max-width: 540px;
+      width: 100%;
+      padding: 30px;
+      box-shadow: var(--shadow-lg), var(--gold-glow-subtle);
+      animation: zoomIn 0.3s ease;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    /* Certificate Layout */
+    .cert-frame {
+      background: #fff;
+      color: #080808;
+      padding: 36px;
+      border: 8px double #d4af37;
+      border-radius: 8px;
+      text-align: center;
+      font-family: 'Outfit', serif;
+      position: relative;
+    }
+
+    .cert-title {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #8b6508;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+
+    .cert-sub {
+      font-size: 0.95rem;
+      color: #555;
+      margin-bottom: 20px;
+    }
+
+    .cert-name {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #111;
+      border-bottom: 2px solid #d4af37;
+      display: inline-block;
+      padding: 4px 20px;
+      margin: 12px 0 16px;
+    }
+
+    .cert-body {
+      font-size: 0.92rem;
+      line-height: 1.6;
+      color: #444;
+      margin-bottom: 24px;
+    }
+
+    .cert-footer {
+      display: flex;
+      justify-content: space-between;
+      border-top: 1px dashed #ccc;
+      padding-top: 14px;
+      font-size: 0.8rem;
+      color: #777;
+    }
   </style>
 </head>
+
 <body>
-  <div class="topbar">🔐 EvenTiamo Admin</div>
-  <div class="container">
-    <div id="loginBox">
-      <input id="pinInput" type="password" placeholder="Enter Admin PIN">
-      <button onclick="validateLogin()">Login</button>
-    </div>
 
-    <div id="dashboard">
-      <div class="stats-grid">
-        <div class="stat-card" id="statTotal">Total: —</div>
-        <div class="stat-card" id="statChecked">Checked-In: —</div>
-        <div class="stat-card" id="statNotChecked">Pending: —</div>
+  <!-- ================= NAVBAR ================= -->
+  <header>
+    <nav class="navbar">
+      <div class="logo">
+        <a href="index.html"><span>✦</span> EvenTiamo Admin</a>
       </div>
-
-      <div class="event-cards" id="eventsSummary">
-        <!-- Event-wise summary cards injected here -->
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="checkin.html">🎫 Scanner Portal</a></li>
+        <li><a href="index.html#events">Live Website</a></li>
+      </ul>
+      <div class="nav-actions">
+        <button id="logoutBtn" class="btn-secondary btn-sm" onclick="logoutAdmin()" style="display:none;">Sign Out</button>
+        <button class="nav-toggle" aria-label="Toggle navigation menu">☰</button>
       </div>
+    </nav>
+  </header>
 
-      <div class="controls">
-        <input id="searchInput" placeholder="Search by name, email or ticket ID">
-        <select id="eventFilter">
-          <option value="">All Events</option>
-          <option value="Fusion">Fusion</option>
-          <option value="Glam">Glam</option>
-          <option value="Ethnic">Ethnic</option>
-        </select>
-        <select id="statusFilter">
-          <option value="">All Status</option>
-          <option value="Checked">Checked In</option>
-          <option value="Not Checked">Not Checked</option>
-        </select>
-        <button onclick="applyFilters()">Filter</button>
-        <button onclick="resetFilters()">Reset</button>
-        <button onclick="downloadCSV()">Export CSV</button>
-      </div>
-
-      <div id="charts">
-        <div class="chart-card">
-          <canvas id="pieChart"></canvas>
+  <!-- ================= LOGIN VIEW ================= -->
+  <div id="loginBox" class="admin-container" style="max-width: 440px; text-align: center; margin-top: 120px;">
+    <div class="register-panel" style="margin: 0 auto;">
+      <div style="font-size: 2.4rem; margin-bottom: 12px;">🔐</div>
+      <h3>Organizer Admin Login</h3>
+      <p class="small-muted" style="margin-bottom: 20px;">Dedicated credentials for college event administrators.</p>
+      
+      <form onsubmit="handleLoginSubmit(event)">
+        <div class="form-row">
+          <label for="adminEmailInput">Admin Email / Username</label>
+          <input id="adminEmailInput" type="text" placeholder="admin@yourcollege.edu" required autofocus />
         </div>
-        <div class="chart-card">
-          <canvas id="barChart"></canvas>
-        </div>
-      </div>
 
-      <table id="dataTable">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Phone</th>
-            <th>Event</th>
-            <th>Ticket ID</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-      </table>
+        <div class="form-row">
+          <label for="adminPasswordInput">Admin Password / PIN</label>
+          <input id="adminPasswordInput" type="password" placeholder="••••••••" required />
+        </div>
+
+        <button type="submit" class="btn btn-full" style="margin-top: 16px;">Sign In to Console</button>
+      </form>
+
+      <div id="loginError" class="form-note error" style="margin-top: 14px;"></div>
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="admin.js"></script>
+  <!-- ================= DASHBOARD MAIN VIEW ================= -->
+  <main id="dashboard" class="admin-container" style="display: none;">
+    
+    <!-- Top Bar -->
+    <div class="admin-header">
+      <div>
+        <div class="pill">Master Control Console</div>
+        <h1 style="font-size: 2.2rem; margin-top: 6px;">Event Intelligence & Management</h1>
+        <p class="small-muted">Control event lifecycles (Add/Edit/Delete), track live gate attendance, and manage student passes.</p>
+      </div>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button class="btn btn-sm" onclick="openCreateEventModal()">➕ New Event</button>
+        <button class="btn-secondary btn-sm" onclick="loadAllData()">🔄 Refresh</button>
+        <button class="btn-secondary btn-sm" onclick="downloadCSV()">📥 Export CSV</button>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="admin-tabs">
+      <button class="tab-btn active" onclick="switchTab('analytics')">📊 Analytics & KPIs</button>
+      <button class="tab-btn" onclick="switchTab('events')">🎪 Event Management (CRUD)</button>
+      <button class="tab-btn" onclick="switchTab('attendees')">👥 Attendee Directory</button>
+      <button class="tab-btn" onclick="switchTab('security')">⚙️ Admin Security</button>
+    </div>
+
+    <!-- ================= TAB 1: ANALYTICS & KPIS ================= -->
+    <div id="tab-analytics" class="tab-content active">
+      <!-- KPI Summary Grid -->
+      <section class="admin-kpis">
+        <div class="kpi-card">
+          <span class="kpi-title">Total Registrations</span>
+          <div class="kpi-value" id="kpiTotal">0</div>
+          <span class="kpi-sub">Across all active campus events</span>
+        </div>
+
+        <div class="kpi-card">
+          <span class="kpi-title">Verified Check-Ins</span>
+          <div class="kpi-value" id="kpiChecked" style="color: #34d399;">0</div>
+          <span class="kpi-sub" id="kpiRate">0% Turnout Rate</span>
+        </div>
+
+        <div class="kpi-card">
+          <span class="kpi-title">Pending Attendees</span>
+          <div class="kpi-value" id="kpiPending" style="color: #fbbf24;">0</div>
+          <span class="kpi-sub">Passes issued & valid</span>
+        </div>
+
+        <div class="kpi-card">
+          <span class="kpi-title">Active Events</span>
+          <div class="kpi-value" id="kpiEvents">0</div>
+          <span class="kpi-sub">Controlled in database</span>
+        </div>
+      </section>
+
+      <!-- Event Breakdown Cards -->
+      <section style="margin-bottom:30px;">
+        <h3 class="section-subtitle">Live Capacity Tracking</h3>
+        <div class="events-summary-grid" id="eventsSummary"></div>
+      </section>
+
+      <!-- Visual Charts Grid (Compact & Proportional) -->
+      <section class="charts-grid">
+        <div class="chart-box">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <h3 style="margin-bottom:0;">📊 Check-In Attendance Ratio</h3>
+            <span class="small-muted" style="font-size:0.72rem;">Live Gate Ratio</span>
+          </div>
+          <div style="position:relative;height:160px;width:100%;">
+            <canvas id="pieChart"></canvas>
+          </div>
+        </div>
+        <div class="chart-box">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <h3 style="margin-bottom:0;">📈 Event-Wise Registration vs Check-In</h3>
+            <span class="small-muted" style="font-size:0.72rem;">Turnout by Event</span>
+          </div>
+          <div style="position:relative;height:160px;width:100%;">
+            <canvas id="barChart"></canvas>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ================= TAB 2: EVENT MANAGEMENT (CRUD) ================= -->
+    <div id="tab-events" class="tab-content">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
+        <div>
+          <h2 style="font-size:1.6rem;color:#fff;">Campus Events Directory</h2>
+          <p class="small-muted">Control complete event lifecycles: Create, Edit, Duplicate, Draft/Publish, Schedule, Archive, Cancel, and Preview.</p>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn" onclick="openCreateEventModal()">➕ Create New Event</button>
+        </div>
+      </div>
+
+      <!-- Event Status Filter Tabs -->
+      <div class="event-status-tabs" style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;">
+        <button class="filter-btn active" id="btn-status-all" onclick="filterEventsByStatus('all')">All (<span id="count-all">0</span>)</button>
+        <button class="filter-btn" id="btn-status-published" onclick="filterEventsByStatus('published')">🟢 Published / Open (<span id="count-published">0</span>)</button>
+        <button class="filter-btn" id="btn-status-draft" onclick="filterEventsByStatus('draft')">📝 Drafts (<span id="count-draft">0</span>)</button>
+        <button class="filter-btn" id="btn-status-scheduled" onclick="filterEventsByStatus('scheduled')">⏰ Scheduled (<span id="count-scheduled">0</span>)</button>
+        <button class="filter-btn" id="btn-status-cancelled" onclick="filterEventsByStatus('cancelled')">🚫 Cancelled (<span id="count-cancelled">0</span>)</button>
+        <button class="filter-btn" id="btn-status-archived" onclick="filterEventsByStatus('archived')">📦 Archived (<span id="count-archived">0</span>)</button>
+      </div>
+
+      <!-- Events Table -->
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Event Title</th>
+              <th>Category</th>
+              <th>Date & Time</th>
+              <th>Venue</th>
+              <th>Capacity</th>
+              <th>Feedback</th>
+              <th>Brochure</th>
+              <th>Status</th>
+              <th>Actions & Controls</th>
+            </tr>
+          </thead>
+          <tbody id="eventsCrudTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ================= TAB 3: ATTENDEE DIRECTORY ================= -->
+    <div id="tab-attendees" class="tab-content">
+      <div class="controls-panel">
+        <div class="controls-group">
+          <input id="searchInput" placeholder="🔍 Search name, email, or ticket ID..." oninput="applyFilters()">
+          <select id="eventFilter" onchange="applyFilters()">
+            <option value="">All Events</option>
+          </select>
+          <select id="statusFilter" onchange="applyFilters()">
+            <option value="">All Statuses</option>
+            <option value="Checked">Checked In</option>
+            <option value="Not Checked">Not Checked</option>
+          </select>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-secondary btn-sm" onclick="resetFilters()">Clear Filters</button>
+          <button class="btn btn-sm" onclick="downloadCSV()">Export CSV</button>
+        </div>
+      </div>
+
+      <!-- Attendees Table -->
+      <div class="table-responsive">
+        <table id="dataTable">
+          <thead>
+            <tr>
+              <th>Ticket ID</th>
+              <th>Student Name</th>
+              <th>Email</th>
+              <th>Dept / ID</th>
+              <th>Event</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ================= TAB 4: ADMIN SECURITY SETTINGS ================= -->
+    <div id="tab-security" class="tab-content">
+      <div style="max-width: 540px; margin: 0 auto;">
+        <div class="register-panel">
+          <h3>🔐 Admin Security Credentials</h3>
+          <p class="small-muted" style="margin-bottom: 20px;">Update your administrator login email, master password, and quick PIN.</p>
+
+          <form onsubmit="handleUpdateAdminCreds(event)">
+            <div class="form-row">
+              <label for="newAdminEmail">Admin Email *</label>
+              <input id="newAdminEmail" type="email" required placeholder="admin@eventiamo.com" />
+            </div>
+
+            <div class="form-row">
+              <label for="newAdminPassword">Master Password *</label>
+              <input id="newAdminPassword" type="password" required placeholder="Enter new password" />
+            </div>
+
+            <div class="form-row">
+              <label for="newAdminPin">4-Digit Quick PIN *</label>
+              <input id="newAdminPin" type="text" maxlength="6" required placeholder="9999" style="font-family:monospace;letter-spacing:0.1em;" />
+            </div>
+
+            <button type="submit" class="btn btn-full" style="margin-top: 14px;">Save Updated Credentials</button>
+          </form>
+
+          <div id="securityMsg" class="form-note"></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ================= MODAL: CREATE EVENT ================= -->
+  <div id="createEventModal" class="admin-modal">
+    <div class="admin-modal-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <h3 style="color:var(--accent-gold);margin:0;">➕ Create New Campus Event</h3>
+        <button onclick="closeCreateEventModal()" style="background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer;">✕</button>
+      </div>
+      <p class="small-muted" style="margin-bottom:16px;">Configure event details, schedule publishing, or clone from an existing template.</p>
+
+      <!-- Clone from Template Bar -->
+      <div class="form-row" style="background:rgba(243,207,85,0.08);padding:10px 14px;border-radius:var(--radius-sm);border:1px dashed var(--border-gold);margin-bottom:16px;">
+        <label style="color:var(--accent-gold);font-weight:700;font-size:0.85rem;margin-bottom:4px;">📋 Clone from Existing Event Template (Optional)</label>
+        <select id="cloneFromEventSelect" onchange="handleSelectCloneTemplate(event)" style="font-size:0.85rem;">
+          <option value="">-- Start from Blank Event --</option>
+        </select>
+        <span class="small-muted" style="font-size:0.75rem;display:block;margin-top:4px;">Auto-populates categories, dept, venue, capacity, brochure, and highlights in 1 second.</span>
+      </div>
+
+      <form onsubmit="handleCreateEvent(event)">
+        <div class="form-row">
+          <label>Event Title *</label>
+          <input id="newEventTitle" type="text" required placeholder="e.g. HackNova 2026" />
+        </div>
+        <div class="form-row">
+          <label>Category *</label>
+          <select id="newEventCategory" required>
+            <option value="music">🎵 Music & Concerts</option>
+            <option value="cultural">🎭 Cultural & Heritage</option>
+            <option value="fashion">✨ Fashion & Glamour</option>
+            <option value="tech">💻 Technical & Hackathon</option>
+            <option value="sports">⚽ Sports & Gaming</option>
+            <option value="management">📈 Business & Management</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Department / Organizing Body *</label>
+          <input id="newEventDept" type="text" required placeholder="e.g. Department of Computer Science" />
+        </div>
+        <div class="form-row">
+          <label>Event Date (YYYY-MM-DD) *</label>
+          <input id="newEventDate" type="date" required />
+        </div>
+        <div class="form-row">
+          <label>Event Time *</label>
+          <input id="newEventTime" type="text" required placeholder="e.g. 6:30 PM" />
+        </div>
+        <div class="form-row">
+          <label>Venue / Location *</label>
+          <input id="newEventVenue" type="text" required placeholder="e.g. Main Auditorium Hall A" />
+        </div>
+        <div class="form-row">
+          <label>Max Seating Capacity *</label>
+          <input id="newEventCapacity" type="number" value="200" min="10" required />
+        </div>
+
+        <!-- Publishing Status Options -->
+        <div class="form-row">
+          <label>Publishing Status *</label>
+          <select id="newEventStatus" onchange="handleNewEventStatusChange(event)">
+            <option value="Open">🟢 Publish Immediately (Open for public registrations)</option>
+            <option value="Draft">📝 Save as Draft (Hidden from students)</option>
+            <option value="Scheduled">⏰ Schedule Publishing for Future Date & Time</option>
+          </select>
+        </div>
+
+        <div class="form-row" id="newEventScheduleRow" style="display:none;background:rgba(59,130,246,0.1);padding:10px;border-radius:var(--radius-sm);border:1px solid rgba(59,130,246,0.3);">
+          <label style="color:#60a5fa;font-weight:700;">⏰ Scheduled Release Date & Time *</label>
+          <input id="newEventScheduleDate" type="datetime-local" style="font-size:0.88rem;" />
+          <span class="small-muted" style="font-size:0.75rem;display:block;margin-top:4px;">Event will automatically go live when this time arrives.</span>
+        </div>
+
+        <div class="form-row">
+          <label>Banner Image URL</label>
+          <input id="newEventImage" type="text" placeholder="images/hero.jpg (or web URL)" value="images/hero.jpg" />
+        </div>
+        <div class="form-row">
+          <label>Short Description *</label>
+          <textarea id="newEventDesc" rows="3" required style="width:100%;padding:10px;background:rgba(0,0,0,0.4);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:#fff;" placeholder="Detailed summary of the event..."></textarea>
+        </div>
+
+        <!-- Event Brochure Attachment Section -->
+        <div style="background: rgba(212, 175, 55, 0.05); border: 1px solid var(--border-gold); border-radius: var(--radius-sm); padding: 14px; margin-top: 14px; margin-bottom: 14px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <span style="font-size:1.2rem;">📄</span>
+            <strong style="color:var(--accent-gold);font-size:0.92rem;">Attach Event Brochure (PDF / Document)</strong>
+          </div>
+          <p class="small-muted" style="margin-bottom:12px;font-size:0.8rem;">
+            Upload a custom PDF brochure or enter a link. If left blank, EvenTiamo automatically generates an official printable brochure document for users.
+          </p>
+
+          <div class="form-row" style="margin-bottom:10px;">
+            <label style="font-size:0.82rem;">Upload File (.pdf, .doc, image)</label>
+            <input id="newEventBrochureFile" type="file" accept=".pdf,.doc,.docx,image/*" onchange="handleNewEventBrochureUpload(event)" style="font-size:0.82rem;padding:6px;background:rgba(0,0,0,0.4);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:#fff;width:100%;" />
+            <div id="newEventBrochureFileBadge" style="display:none;margin-top:6px;font-size:0.78rem;color:#34d399;"></div>
+          </div>
+
+          <div class="form-row" style="margin-bottom:10px;">
+            <label style="font-size:0.82rem;">Or Paste Brochure URL / Cloud Link</label>
+            <input id="newEventBrochureUrl" type="text" placeholder="https://example.com/brochure.pdf" style="font-size:0.85rem;" />
+          </div>
+
+          <div class="form-row" style="margin-bottom:0;">
+            <label style="font-size:0.82rem;">Brochure Download Filename (Optional)</label>
+            <input id="newEventBrochureName" type="text" placeholder="e.g. HackNova_2025_Official_Brochure.pdf" style="font-size:0.85rem;" />
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:20px;">
+          <button type="submit" class="btn btn-full">Save & Create Event</button>
+          <button type="button" class="btn-secondary btn-full" onclick="closeCreateEventModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: EDIT EVENT ================= -->
+  <div id="editEventModal" class="admin-modal">
+    <div class="admin-modal-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <h3 style="color:var(--accent-gold);margin:0;">✏️ Edit Campus Event</h3>
+        <button onclick="closeEditEventModal()" style="background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer;">✕</button>
+      </div>
+
+      <form onsubmit="handleSaveEditedEvent(event)">
+        <input type="hidden" id="editEventId" />
+
+        <div class="form-row">
+          <label>Event Title *</label>
+          <input id="editEventTitle" type="text" required />
+        </div>
+        <div class="form-row">
+          <label>Category *</label>
+          <select id="editEventCategory" required>
+            <option value="music">🎵 Music & Concerts</option>
+            <option value="cultural">🎭 Cultural & Heritage</option>
+            <option value="fashion">✨ Fashion & Glamour</option>
+            <option value="tech">💻 Technical & Hackathon</option>
+            <option value="sports">⚽ Sports & Gaming</option>
+            <option value="management">📈 Business & Management</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Department *</label>
+          <input id="editEventDept" type="text" required />
+        </div>
+        <div class="form-row">
+          <label>Date *</label>
+          <input id="editEventDate" type="date" required />
+        </div>
+        <div class="form-row">
+          <label>Time *</label>
+          <input id="editEventTime" type="text" required />
+        </div>
+        <div class="form-row">
+          <label>Venue *</label>
+          <input id="editEventVenue" type="text" required />
+        </div>
+        <div class="form-row">
+          <label>Capacity *</label>
+          <input id="editEventCapacity" type="number" required />
+        </div>
+
+        <!-- Comprehensive Status Selection -->
+        <div class="form-row">
+          <label>Event & Registration Status *</label>
+          <select id="editEventStatus" onchange="handleEditEventStatusChange(event)">
+            <option value="Open">🟢 Published / Open (Active Registrations)</option>
+            <option value="Draft">📝 Draft (Hidden from students)</option>
+            <option value="Scheduled">⏰ Scheduled Publishing</option>
+            <option value="Completed">🏆 Completed (Show Memories & Photo Album)</option>
+            <option value="Cancelled">🚫 Cancelled (Show Notice, Block Registrations)</option>
+            <option value="Archived">📦 Archived (Archived Storage)</option>
+            <option value="Sold Out">🔴 Sold Out</option>
+          </select>
+        </div>
+
+        <div class="form-row" id="editEventScheduleRow" style="display:none;background:rgba(59,130,246,0.1);padding:10px;border-radius:var(--radius-sm);border:1px solid rgba(59,130,246,0.3);">
+          <label style="color:#60a5fa;font-weight:700;">⏰ Scheduled Release Date & Time</label>
+          <input id="editEventScheduleDate" type="datetime-local" />
+        </div>
+
+        <div class="form-row" id="editEventCancelRow" style="display:none;background:rgba(239,68,68,0.1);padding:10px;border-radius:var(--radius-sm);border:1px solid rgba(239,68,68,0.3);">
+          <label style="color:#f87171;font-weight:700;">Cancellation Notice for Attendees</label>
+          <input id="editEventCancelReason" type="text" placeholder="e.g. Cancelled due to heavy rain / university circular" />
+        </div>
+
+        <div class="form-row">
+          <label>Short Description *</label>
+          <textarea id="editEventDesc" rows="2" required style="width:100%;padding:10px;background:rgba(0,0,0,0.4);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:#fff;"></textarea>
+        </div>
+        <div class="form-row">
+          <label>Post-Event Recap Notes</label>
+          <textarea id="editEventRecap" rows="2" placeholder="Summary of how the event concluded, attendance, and feedback..." style="width:100%;padding:10px;background:rgba(0,0,0,0.4);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:#fff;"></textarea>
+        </div>
+        <div class="form-row">
+          <label>Post-Event Photo URLs (one per line, format: image_url | caption)</label>
+          <textarea id="editEventGallery" rows="3" placeholder="images/dj.jpg | DJ Performance&#10;images/past2.jpg | Stage Lighting" style="width:100%;padding:10px;background:rgba(0,0,0,0.4);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:#fff;font-family:monospace;font-size:0.82rem;"></textarea>
+        </div>
+
+        <!-- Event Brochure Management Section -->
+        <div style="background: rgba(212, 175, 55, 0.05); border: 1px solid var(--border-gold); border-radius: var(--radius-sm); padding: 14px; margin-top: 14px; margin-bottom: 14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:1.2rem;">📄</span>
+              <strong style="color:var(--accent-gold);font-size:0.92rem;">Event Brochure Attachment</strong>
+            </div>
+            <div id="editEventBrochureStatusBadge" style="font-size:0.75rem;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,0.08);color:#ccc;"></div>
+          </div>
+
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
+            <button type="button" class="btn-secondary btn-sm" onclick="testDownloadEditBrochure()" style="font-size:0.78rem;">📥 Preview / Test Download</button>
+            <button type="button" class="btn-secondary btn-sm" onclick="clearEditBrochureAttachment()" style="font-size:0.78rem;color:#f87171;border-color:rgba(239,68,68,0.4);">🗑️ Remove Custom File</button>
+          </div>
+
+          <div class="form-row" style="margin-bottom:10px;">
+            <label style="font-size:0.82rem;">Upload New File (.pdf, .doc, image)</label>
+            <input id="editEventBrochureFile" type="file" accept=".pdf,.doc,.docx,image/*" onchange="handleEditEventBrochureUpload(event)" style="font-size:0.82rem;padding:6px;background:rgba(0,0,0,0.4);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:#fff;width:100%;" />
+            <div id="editEventBrochureFileBadge" style="display:none;margin-top:6px;font-size:0.78rem;color:#34d399;"></div>
+          </div>
+
+          <div class="form-row" style="margin-bottom:10px;">
+            <label style="font-size:0.82rem;">Or Edit Brochure URL / Cloud Link</label>
+            <input id="editEventBrochureUrl" type="text" placeholder="https://example.com/brochure.pdf" style="font-size:0.85rem;" />
+          </div>
+
+          <div class="form-row" style="margin-bottom:0;">
+            <label style="font-size:0.82rem;">Brochure Filename</label>
+            <input id="editEventBrochureName" type="text" placeholder="e.g. Fusion_2K24_Official_Brochure.pdf" style="font-size:0.85rem;" />
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:20px;">
+          <button type="submit" class="btn btn-full">Save Changes</button>
+          <button type="button" class="btn-secondary btn-full" onclick="closeEditEventModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: EVENT LIVE IN-PAGE PREVIEW ================= -->
+  <div id="eventPreviewModal" class="admin-modal">
+    <div class="admin-modal-card" style="max-width:1140px;width:96%;max-height:94vh;padding:20px;background:#111118;display:flex;flex-direction:column;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border-bottom:1px solid var(--border-subtle);padding-bottom:10px;flex-wrap:wrap;gap:8px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:1.6rem;">👁️</span>
+          <div>
+            <h3 id="previewModalTitle" style="color:var(--accent-gold);margin:0;font-size:1.15rem;">Event Live Preview</h3>
+            <span id="previewModalStatusBadge" class="small-muted" style="font-size:0.78rem;"></span>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button class="btn-secondary btn-sm" onclick="setPreviewDevice('desktop')">💻 Desktop View</button>
+          <button class="btn-secondary btn-sm" onclick="setPreviewDevice('mobile')">📱 Mobile View</button>
+          <button id="previewEditBtn" class="btn btn-sm" onclick="openEditFromPreview()">✏️ Edit Event</button>
+          <a id="previewOpenTabBtn" href="#" target="_blank" class="btn-secondary btn-sm" style="text-decoration:none;">🔗 Open in New Tab</a>
+          <button class="btn-secondary btn-sm" onclick="closeEventPreviewModal()">✕ Close</button>
+        </div>
+      </div>
+      <div id="previewFrameContainer" style="flex:1;min-height:72vh;background:#070709;border-radius:8px;overflow:hidden;border:1px solid var(--border-gold);display:flex;justify-content:center;align-items:stretch;">
+        <iframe id="eventPreviewIframe" style="width:100%;height:100%;border:none;background:#070709;" src="about:blank"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: FEEDBACK REVIEWS ================= -->
+  <div id="feedbackModal" class="admin-modal">
+    <div class="admin-modal-card" style="max-width: 680px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div>
+          <h3 id="feedbackModalEventTitle" style="color:var(--accent-gold);margin:0;">Event Feedback & Reviews</h3>
+          <span id="feedbackModalRatingSummary" class="small-muted"></span>
+        </div>
+        <button onclick="closeFeedbackModal()" style="background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer;">✕</button>
+      </div>
+
+      <div id="feedbackModalReviewsList" class="reviews-stream" style="max-height:420px;overflow-y:auto;padding-right:6px;"></div>
+
+      <div style="display:flex;justify-content:flex-end;margin-top:18px;">
+        <button class="btn-secondary btn-sm" onclick="closeFeedbackModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: CERTIFICATE GENERATOR ================= -->
+  <div id="certModal" class="admin-modal">
+    <div class="admin-modal-card" style="max-width: 650px; background: transparent; border: none; padding: 0;">
+      <div class="cert-frame" id="certFrame">
+        <div style="font-size: 0.8rem; letter-spacing: 0.2em; color: #888; text-transform: uppercase;">✦ EvenTiamo Academic Credentials ✦</div>
+        <div class="cert-title">Certificate of Participation</div>
+        <div class="cert-sub">This is proudly presented to</div>
+
+        <div class="cert-name" id="certStudentName">Student Name</div>
+
+        <div class="cert-body">
+          For active participation and verified attendance at <strong id="certEventName" style="color:#080808;">Fusion 2K24</strong> organized by the College Student Council. Issued under Ticket ID <span id="certTicketId" style="font-family:monospace;font-weight:700;">ET-FUS-1234</span>.
+        </div>
+
+        <div class="cert-footer">
+          <div>📅 Date: <span id="certDate">Today</span></div>
+          <div>🏛️ EvenTiamo Authority</div>
+          <div>✓ Digitally Verified</div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 12px; justify-content: center; margin-top: 18px;">
+        <button class="btn btn-sm" onclick="window.print()">🖨️ Print Certificate</button>
+        <button class="btn-secondary btn-sm" onclick="closeCertModal()">Close Preview</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: CSV EXPORT CONFIGURATOR ================= -->
+  <div id="csvExportModal" class="admin-modal">
+    <div class="admin-modal-card" style="max-width: 580px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:1.5rem;">📥</span>
+          <div>
+            <h3 style="color:var(--accent-gold);margin:0;">Export Attendee Records (CSV)</h3>
+            <span class="small-muted" style="font-size:0.78rem;">Sort and filter student passes and attendance data.</span>
+          </div>
+        </div>
+        <button onclick="closeCsvExportModal()" style="background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer;">✕</button>
+      </div>
+
+      <div style="background:rgba(243,207,85,0.06);border:1px solid var(--border-gold);border-radius:var(--radius-sm);padding:14px;margin-bottom:18px;">
+        <div class="form-row" style="margin-bottom:12px;">
+          <label style="color:var(--accent-gold);font-weight:700;">1. Select Event Scope *</label>
+          <select id="csvExportScope" onchange="handleCsvScopeChange()" style="font-size:0.9rem;">
+            <option value="all">🌐 All Campus Events (Complete Directory)</option>
+            <option value="specific">🎯 Single Specific Event Only</option>
+            <option value="filtered">🔍 Current Filtered Table View</option>
+          </select>
+        </div>
+
+        <div class="form-row" id="csvSpecificEventRow" style="display:none;margin-bottom:12px;">
+          <label style="color:#60a5fa;font-weight:700;">🎯 Choose Event *</label>
+          <select id="csvExportEventSelect" onchange="updateCsvExportPreview()" style="font-size:0.88rem;"></select>
+        </div>
+
+        <div class="form-row" style="margin-bottom:12px;">
+          <label style="color:var(--accent-gold);font-weight:700;">2. Sort Attendees According To *</label>
+          <select id="csvExportSortBy" onchange="updateCsvExportPreview()" style="font-size:0.9rem;">
+            <option value="event_asc" selected>🎪 Event Name (A → Z) [Grouped by Event]</option>
+            <option value="event_desc">🎪 Event Name (Z → A)</option>
+            <option value="name_asc">👤 Student Name (A → Z)</option>
+            <option value="ticket_asc">🎟️ Ticket ID</option>
+            <option value="status_checked_first">✅ Check-In Status (Verified First)</option>
+            <option value="status_pending_first">⏳ Check-In Status (Pending First)</option>
+          </select>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:8px;margin-top:10px;">
+          <input type="checkbox" id="csvIncludeStats" checked style="width:auto;cursor:pointer;" />
+          <label for="csvIncludeStats" style="font-size:0.82rem;color:#cbd5e1;cursor:pointer;margin:0;">Include summary headers & generation timestamp at top of CSV</label>
+        </div>
+      </div>
+
+      <!-- Export Preview Badge -->
+      <div id="csvExportSummaryBox" style="background:rgba(0,0,0,0.4);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:18px;font-size:0.85rem;color:#cbd5e1;">
+        📊 <strong>Export Summary:</strong> <span id="csvExportCountPreview">Calculating...</span>
+      </div>
+
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-full" onclick="executeCsvExport()">📥 Download Sorted CSV</button>
+        <button class="btn-secondary btn-full" onclick="closeCsvExportModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>

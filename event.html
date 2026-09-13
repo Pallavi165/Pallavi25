@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="EvenTiamo Event Portal — View schedule, venue details, register for digital passes, view post-event photo albums, and submit participant feedback.">
+  <title id="pageTitle">Event Details — EvenTiamo</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="script.js" defer></script>
+</head>
+<body>
+
+  <!-- ================= NAVBAR ================= -->
+  <header>
+    <nav class="navbar">
+      <div class="logo">
+        <a href="index.html#hero"><span>✦</span> EvenTiamo</a>
+      </div>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="index.html#events">All Events</a></li>
+        <li><a href="index.html#gallery">Gallery</a></li>
+        <li><a href="checkin.html">🎫 Scanner</a></li>
+        <li><a href="admin.html">🔐 Admin</a></li>
+      </ul>
+      <div class="nav-actions">
+        <button class="btn-secondary btn-sm" onclick="openMyPassesModal()">🎫 My Passes</button>
+        <a href="index.html#events" class="btn btn-sm">Explore Fests</a>
+        <button class="nav-toggle" aria-label="Toggle navigation menu">☰</button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Container for Dynamic Content -->
+  <div id="eventContainer">
+    <div style="min-height:70vh;display:flex;align-items:center;justify-content:center;padding:120px 20px;">
+      <div style="color:var(--accent-gold);font-size:1.2rem;">Loading Event Details...</div>
+    </div>
+  </div>
+
+  <!-- Lightbox Modal -->
+  <div id="modal" aria-hidden="true">
+    <div id="modal-content">
+      <button id="modal-close" aria-label="Close modal">✕</button>
+      <img id="modal-img" alt="Enlarged Event Image">
+      <div id="modal-caption" style="text-align:center;color:#f3cf55;font-size:1rem;margin-top:10px;font-weight:600;"></div>
+    </div>
+  </div>
+
+  <!-- Certificate Modal for Attendees -->
+  <div id="certModal" class="admin-modal">
+    <div class="admin-modal-card" style="max-width: 650px; background: transparent; border: none; padding: 0;">
+      <div class="cert-frame" id="certFrame">
+        <div style="font-size: 0.8rem; letter-spacing: 0.2em; color: #888; text-transform: uppercase;">✦ EvenTiamo Academic Credentials ✦</div>
+        <div class="cert-title">Certificate of Participation</div>
+        <div class="cert-sub">This is proudly presented to</div>
+
+        <div class="cert-name" id="certStudentName">Student Name</div>
+
+        <div class="cert-body">
+          For active participation and verified attendance at <strong id="certEventName" style="color:#080808;">Campus Fest</strong> organized by the College Student Council. Issued under Ticket ID <span id="certTicketId" style="font-family:monospace;font-weight:700;">ET-EVT-1234</span>.
+        </div>
+
+        <div class="cert-footer">
+          <div>📅 Date: <span id="certDate">Today</span></div>
+          <div>🏛️ EvenTiamo Authority</div>
+          <div>✓ Digitally Verified</div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 12px; justify-content: center; margin-top: 18px;">
+        <button class="btn btn-sm" onclick="window.print()">🖨️ Print Certificate</button>
+        <button class="btn-secondary btn-sm" onclick="closeCertModal()">Close Preview</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer" style="margin-top:60px;">
+    <div class="footer-bottom" style="border:none;text-align:center;justify-content:center;">
+      © 2025 EvenTiamo • Centralized College Event Management System • info@eventiamo.com
+    </div>
+  </footer>
+
+  <script>
+    let currentSelectedRating = 5;
+
+    function selectRating(starVal) {
+      currentSelectedRating = starVal;
+      document.querySelectorAll(".star-rating-input span").forEach(star => {
+        const val = parseInt(star.getAttribute("data-val"), 10);
+        if (val <= starVal) star.classList.add("active");
+        else star.classList.remove("active");
+      });
+    }
+
+    function openCertModalForStudent(name, eventTitle, ticketId) {
+      document.getElementById("certStudentName").textContent = name || "Verified Student";
+      document.getElementById("certEventName").textContent = eventTitle || "Campus Fest";
+      document.getElementById("certTicketId").textContent = ticketId || "ET-CONFIRMED";
+      document.getElementById("certDate").textContent = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+      const modal = document.getElementById("certModal");
+      if (modal) modal.classList.add("visible");
+    }
+
+    function closeCertModal() {
+      const modal = document.getElementById("certModal");
+      if (modal) modal.classList.remove("visible");
+    }
+
+    function handleGetCertificate(e, eventTitle) {
+      e.preventDefault();
+      const query = document.getElementById("certLookupInput").value.trim().toLowerCase();
+      const feedback = document.getElementById("certLookupMsg");
+      if (!query) return;
+
+      const record = EvenTiamoStore.getAll().find(r => 
+        (r.email || "").toLowerCase() === query || 
+        (r.ticket || r.id || "").toLowerCase() === query
+      );
+
+      if (record) {
+        feedback.style.display = "none";
+        openCertModalForStudent(record.name, record.event || eventTitle, record.ticket || record.id);
+      } else {
+        feedback.className = "form-note error";
+        feedback.textContent = `❌ No record found for "${query}". Ensure you enter the email or ticket ID used during registration.`;
+        feedback.style.display = "block";
+      }
+    }
+
+    function handleFeedbackSubmit(e, eventId, eventTitle) {
+      e.preventDefault();
+      const name = document.getElementById("fbName").value.trim();
+      const email = document.getElementById("fbEmail").value.trim();
+      const comment = document.getElementById("fbComment").value.trim();
+      const msg = document.getElementById("fbFeedbackMsg");
+
+      const submitted = FeedbackManager.submitFeedback({
+        eventId,
+        eventTitle,
+        name,
+        email,
+        rating: currentSelectedRating,
+        comment
+      });
+
+      if (msg) {
+        msg.className = "form-note success";
+        msg.textContent = "🎉 Thank you for your feedback! The event rating has been updated.";
+        msg.style.display = "block";
+      }
+
+      showToast("⭐ Feedback submitted! Event rating updated.");
+      document.getElementById("feedbackForm").reset();
+      selectRating(5);
+
+      // Refresh Ratings and Reviews UI
+      refreshEventRatingsUI(eventId, eventTitle);
+      renderDynamicHomepageEvents();
+    }
+
+    function refreshEventRatingsUI(eventId, eventTitle) {
+      const ratingObj = FeedbackManager.calculateEventRating(eventId);
+      const feedbacks = FeedbackManager.getEventFeedbacks(eventId);
+
+      // Update summary numbers
+      const scoreNum = document.getElementById("ratingScoreNum");
+      const scoreTotal = document.getElementById("ratingScoreTotal");
+      const scoreStars = document.getElementById("ratingScoreStars");
+      const reviewsContainer = document.getElementById("reviewsStreamList");
+
+      if (scoreNum) scoreNum.textContent = ratingObj.avgFormatted;
+      if (scoreTotal) scoreTotal.textContent = `Based on ${ratingObj.totalReviews} verified student reviews`;
+      if (scoreStars) scoreStars.textContent = ratingObj.starsHtml;
+
+      // Update Breakdown Bars
+      for (let star = 5; star >= 1; star--) {
+        const count = ratingObj.breakdown[star] || 0;
+        const pct = ratingObj.totalReviews > 0 ? Math.round((count / ratingObj.totalReviews) * 100) : 0;
+        const fill = document.getElementById(`barFill${star}`);
+        const lbl = document.getElementById(`barCount${star}`);
+        if (fill) fill.style.width = `${pct}%`;
+        if (lbl) lbl.textContent = count;
+      }
+
+      // Update Stream List
+      if (reviewsContainer) {
+        reviewsContainer.innerHTML = feedbacks.map(f => {
+          const starsStr = "★".repeat(f.rating) + "☆".repeat(5 - f.rating);
+          return `
+            <div class="review-card">
+              <div class="review-card-header">
+                <div>
+                  <span class="review-author">${f.name}</span>
+                  <span class="pill" style="font-size:0.68rem;padding:2px 6px;margin-left:6px;">Verified Attendee</span>
+                </div>
+                <div class="review-stars">${starsStr}</div>
+              </div>
+              <p class="review-text">${f.comment}</p>
+              <div class="review-date">📅 ${f.date || 'Recent Feedback'}</div>
+            </div>
+          `;
+        }).join("");
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      let eventId = urlParams.get("id") || "fusion-2k24";
+
+      const event = EventManager.getById(eventId);
+      const container = document.getElementById("eventContainer");
+
+      if (!event) {
+        container.innerHTML = `
+          <div class="admin-container" style="text-align:center;padding:140px 20px 80px;">
+            <div style="font-size:3rem;margin-bottom:12px;">🎪</div>
+            <h1 style="font-size:2.2rem;margin-bottom:12px;">Event Not Found</h1>
+            <p class="text-secondary" style="margin-bottom:24px;">The event you are looking for does not exist or may have been removed by organizers.</p>
+            <a href="index.html#events" class="btn">Explore Available Events</a>
+          </div>
+        `;
+        return;
+      }
+
+      document.getElementById("pageTitle").textContent = `${event.title} — EvenTiamo`;
+
+      const isOver = EventManager.isEventOver(event);
+      const stats = EventManager.getStats(event.id);
+      const ratingObj = stats.rating || FeedbackManager.calculateEventRating(event.id);
+      const feedbacks = FeedbackManager.getEventFeedbacks(event.id);
+      const isCancelled = event.status === "Cancelled";
+      const isDraft = event.status === "Draft";
+      const isScheduled = event.status === "Scheduled";
+      const isClosed = event.status === "Closed" || event.status === "Sold Out" || isCancelled;
+
+      const galleryPhotos = (event.postEventGallery && event.postEventGallery.length) 
+        ? event.postEventGallery 
+        : [
+            { src: event.image || "images/hero.jpg", caption: `${event.title} Main Stage` },
+            { src: "images/dj.jpg", caption: "Sound & Stage Visuals" },
+            { src: "images/past2.jpg", caption: "Auditorium & Audience" },
+            { src: "images/past3.jpeg", caption: "Crowd Celebration" }
+          ];
+
+      const postEventAlbumHtml = galleryPhotos.map(photo => `
+        <div class="gallery-item">
+          <img class="gallery-img" src="${photo.src}" alt="${photo.caption || event.title}" loading="lazy" onerror="this.src='images/hero.jpg'">
+          <div class="gallery-overlay">${photo.caption || event.title}</div>
+        </div>
+      `).join("");
+
+      const scheduleHtml = (event.schedule || []).map(s => `
+        <li class="lineup-item">
+          <div class="lineup-time">${s.time}</div>
+          <div class="lineup-title">${s.title}</div>
+          <div class="lineup-desc">${s.desc}</div>
+        </li>
+      `).join("");
+
+      const highlightsHtml = (event.highlights || []).map(h => `
+        <li><span class="icon">✨</span> ${h}</li>
+      `).join("");
+
+      let statusBadge = `<span class="pill ${isOver ? 'pill-live' : ''}">${isOver ? '🏆 Event Concluded' : (event.categoryLabel || event.category || 'Campus Event')}</span>`;
+      if (isCancelled) {
+        statusBadge = `<span class="pill pill-live" style="background:rgba(239,68,68,0.25);color:#f87171;border-color:#ef4444;">🚫 Event Cancelled</span>`;
+      } else if (isDraft) {
+        statusBadge = `<span class="pill" style="background:rgba(245,158,11,0.2);color:#fbbf24;border-color:#f59e0b;">📝 Draft Preview</span>`;
+      } else if (isScheduled) {
+        statusBadge = `<span class="pill" style="background:rgba(59,130,246,0.2);color:#60a5fa;border-color:#3b82f6;">⏰ Scheduled Event</span>`;
+      }
+
+      container.innerHTML = `
+        ${isDraft ? `
+          <div style="background:#f59e0b;color:#000;padding:10px 20px;text-align:center;font-weight:700;font-size:0.9rem;position:relative;z-index:1001;">
+            ⚠️ PREVIEW MODE: This event is saved as DRAFT and is hidden from public student browsing.
+          </div>
+        ` : ''}
+
+        ${isScheduled ? `
+          <div style="background:#3b82f6;color:#fff;padding:10px 20px;text-align:center;font-weight:700;font-size:0.9rem;position:relative;z-index:1001;">
+            ⏰ SCHEDULED EVENT: This event is scheduled to automatically release on ${event.scheduledPublishDate || 'upcoming release date'}.
+          </div>
+        ` : ''}
+
+        ${isCancelled ? `
+          <div style="background:#ef4444;color:#fff;padding:12px 20px;text-align:center;font-weight:800;font-size:0.95rem;position:relative;z-index:1001;">
+            🚫 EVENT CANCELLED: ${event.cancellationReason || 'This event has been cancelled by the organizers. Registrations are closed.'}
+          </div>
+        ` : ''}
+
+        <!-- Event Hero -->
+        <section class="event-hero" style="background-image:url('${event.image || 'images/hero.jpg'}')">
+          <div class="overlay"></div>
+          <div class="hero-inner">
+            <div class="hero-left">
+              <div class="breadcrumbs">
+                <a href="index.html">Home</a> <span>/</span> <a href="index.html#events">Events</a> <span>/</span> <span>${event.title}</span>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                ${statusBadge}
+                <span class="pill pill-rating">⭐ ${ratingObj.avgFormatted} (${ratingObj.totalReviews} Reviews)</span>
+              </div>
+
+              <h1 class="event-title">${event.title}</h1>
+              
+              <div class="event-meta">
+                <span>📅 ${event.dateFormatted || event.date}</span>
+                <span>📍 ${event.venue}</span>
+                <span>⏰ ${event.time}</span>
+              </div>
+
+              <p class="text-secondary" style="font-size:1.05rem;max-width:580px;">
+                ${isOver ? (event.recap || event.desc) : event.desc}
+              </p>
+
+              ${isCancelled ? `
+                <div style="background:rgba(239,68,68,0.15);border:1px solid #ef4444;padding:14px;border-radius:var(--radius-sm);margin-top:16px;">
+                  <strong style="color:#f87171;display:block;margin-bottom:4px;">Official Cancellation Notice:</strong>
+                  <span style="font-size:0.9rem;color:#fca5a5;">${event.cancellationReason || 'Event activities and admission passes have been cancelled.'}</span>
+                </div>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;">
+                  <button class="cta-ghost" onclick="EventManager.downloadBrochure('${event.id}')">📄 Download Brochure</button>
+                  <a class="btn-secondary" href="index.html#events">Browse Other Events</a>
+                </div>
+              ` : (isOver ? `
+                <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;">
+                  <a class="cta-primary" href="#album" style="background:linear-gradient(135deg, #38bdf8, #2563eb);color:#fff;">📸 View Photo Album</a>
+                  <button class="cta-ghost" onclick="EventManager.downloadBrochure('${event.id}')">📄 Download Brochure</button>
+                  <a class="cta-ghost" href="#feedbackSection">⭐ Submit Feedback</a>
+                  <a class="cta-ghost" href="#certificateSection">📜 Certificate</a>
+                </div>
+              ` : `
+                <!-- Countdown Box -->
+                <div class="countdown-box" data-countdown="${event.date}T${event.time.replace(/[^0-9:]/g, '') || '18:00'}:00">
+                  <div class="countdown-unit"><span class="countdown-val cd-days">00</span><span class="countdown-lbl">Days</span></div>
+                  <div class="countdown-unit"><span class="countdown-val cd-hours">00</span><span class="countdown-lbl">Hours</span></div>
+                  <div class="countdown-unit"><span class="countdown-val cd-mins">00</span><span class="countdown-lbl">Mins</span></div>
+                  <div class="countdown-unit"><span class="countdown-val cd-secs">00</span><span class="countdown-lbl">Secs</span></div>
+                </div>
+
+                <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                  <a class="cta-primary" href="#register">🎟️ Claim Your Pass</a>
+                  <button class="cta-ghost" onclick="EventManager.downloadBrochure('${event.id}')">📄 Download Brochure</button>
+                  <a class="cta-ghost" href="#schedule">📜 View Schedule</a>
+                  <button class="btn-secondary" onclick="downloadCalendarEvent('${event.title}')">📅 Add Calendar</button>
+                </div>
+              `)}
+            </div>
+
+            <!-- Right Box -->
+            <aside class="hero-right">
+              ${isCancelled ? `
+                <div class="register-panel">
+                  <h3 style="color:#ef4444;">🚫 Event Cancelled</h3>
+                  <p class="register-subtitle">Registrations are no longer accepted.</p>
+                  <div class="form-note error" style="display:block;margin-top:14px;">
+                    <strong>Notice:</strong> ${event.cancellationReason || 'This event has been cancelled.'}
+                  </div>
+                  <div style="margin-top:20px;">
+                    <a href="index.html#events" class="btn btn-full">Explore Active Events</a>
+                  </div>
+                </div>
+              ` : (isOver ? `
+                <div class="register-panel" id="certificateSection">
+                  <span class="pill" style="margin-bottom:10px;">Post-Event Portal</span>
+                  <h3 style="color:var(--accent-gold);">Event Recap & Rating 🎉</h3>
+                  <p class="register-subtitle" style="margin-bottom:16px;">
+                    Event rating automatically calculated at <strong style="color:#f59e0b;">⭐ ${ratingObj.avgFormatted} / 5.0</strong> based on participant feedback.
+                  </p>
+
+                  <div style="background:rgba(255,255,255,0.04);padding:14px;border-radius:var(--radius-sm);margin-bottom:16px;border:1px solid var(--border-subtle);">
+                    <div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:6px;">
+                      <span class="text-muted">Verified Turnout:</span>
+                      <strong style="color:#fff;">${stats.booked} Students</strong>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:0.85rem;">
+                      <span class="text-muted">Participant Rating:</span>
+                      <strong style="color:#f59e0b;">⭐ ${ratingObj.avgFormatted} (${ratingObj.totalReviews} Reviews)</strong>
+                    </div>
+                  </div>
+
+                  <form onsubmit="handleGetCertificate(event, '${event.title}')">
+                    <label style="display:block;font-size:0.82rem;font-weight:600;color:var(--text-secondary);margin-bottom:6px;">
+                      Claim Participation Certificate:
+                    </label>
+                    <div style="display:flex;gap:8px;">
+                      <input id="certLookupInput" type="text" placeholder="Enter Email or Ticket ID" required style="flex:1;padding:10px;font-size:0.88rem;background:rgba(0,0,0,0.5);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:#fff;" />
+                      <button type="submit" class="btn btn-sm">Get Cert</button>
+                    </div>
+                    <div id="certLookupMsg" class="form-note"></div>
+                  </form>
+                </div>
+              ` : `
+                <div class="register-panel" id="register">
+                  <h3>Register For Pass</h3>
+                  <p class="register-subtitle">Instant QR ticket issued upon submission.</p>
+
+                  ${isClosed ? `
+                    <div class="form-note error" style="display:block;margin-bottom:16px;">
+                      ⚠️ Registrations for this event are currently closed.
+                    </div>
+                  ` : `
+                    <form id="dynamicEventForm" data-event="${event.title}" data-event-id="${event.id}">
+                      <div class="form-row">
+                        <label for="dname">Full Name *</label>
+                        <input id="dname" name="name" type="text" required placeholder="e.g. Aarav Sharma" />
+                      </div>
+
+                      <div class="form-row">
+                        <label for="demail">Email Address *</label>
+                        <input id="demail" name="email" type="email" required placeholder="name@gmail.com or @college.edu" />
+                      </div>
+
+                      <div class="form-row">
+                        <label for="ddept">Department / Student ID *</label>
+                        <input id="ddept" name="dept" type="text" required placeholder="e.g. B.Tech CSE (21CS045)" />
+                      </div>
+
+                      <div class="form-row">
+                        <label for="dphone">Phone Number (Optional)</label>
+                        <input id="dphone" name="phone" type="tel" placeholder="+91 9876543210" />
+                      </div>
+
+                      <input type="hidden" name="event" value="${event.title}">
+                      <input type="hidden" name="eventId" value="${event.id}">
+
+                      <div id="dynamicMsg" class="form-note"></div>
+                    </form>
+                  `)}
+                </div>
+              `)}
+            </aside>
+          </div>
+        </section>
+
+        <!-- Main Details Section -->
+        <main class="section-inner" style="padding-top: 40px;">
+          <a class="back-link" href="index.html#events">← Back to All Events</a>
+
+          <!-- ================= POST-EVENT MEMORIES & PHOTO ALBUM ================= -->
+          <section class="detail-card" id="album" style="border-color: rgba(56, 189, 248, 0.4); background: rgba(14, 18, 28, 0.7);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+              <div>
+                <span class="pill" style="background:rgba(56,189,248,0.15);color:#38bdf8;border-color:rgba(56,189,248,0.3);margin-bottom:6px;">Official Album</span>
+                <h3 style="color:#fff;font-size:1.6rem;margin:0;">📸 Event Memories & Photo Gallery</h3>
+              </div>
+              <span class="small-muted">Click any photo to enlarge in full-screen lightbox</span>
+            </div>
+
+            <p class="text-secondary" style="line-height:1.7;margin-bottom:24px;">
+              ${event.recap || `Take a look back at the unforgettable moments, performances, and memories captured live during ${event.title}.`}
+            </p>
+
+            <div class="gallery-grid">
+              ${postEventAlbumHtml}
+            </div>
+          </section>
+
+          <!-- ================= FEEDBACK & REVIEWS SECTION ================= -->
+          <section class="detail-card" id="feedbackSection" style="border-color: var(--border-gold);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+              <div>
+                <span class="pill pill-rating" style="margin-bottom:6px;">Live Participant Feedback</span>
+                <h3 style="font-size:1.6rem;margin:0;">⭐ Student Ratings & Reviews</h3>
+              </div>
+              <span class="small-muted">Event rating is automatically aggregated from verified attendees</span>
+            </div>
+
+            <!-- Rating Summary Widget -->
+            <div class="rating-summary-box">
+              <div class="rating-score-circle">
+                <div class="score-num" id="ratingScoreNum">${ratingObj.avgFormatted}</div>
+                <div class="score-stars" id="ratingScoreStars">${ratingObj.starsHtml}</div>
+                <div class="score-total" id="ratingScoreTotal">Based on ${ratingObj.totalReviews} verified reviews</div>
+              </div>
+
+              <div class="rating-bars">
+                ${[5, 4, 3, 2, 1].map(star => {
+                  const count = ratingObj.breakdown[star] || 0;
+                  const pct = ratingObj.totalReviews > 0 ? Math.round((count / ratingObj.totalReviews) * 100) : 0;
+                  return `
+                    <div class="rating-bar-row">
+                      <span style="width:30px;">${star} ★</span>
+                      <div class="rating-bar-track">
+                        <div class="rating-bar-fill" id="barFill${star}" style="width:${pct}%;"></div>
+                      </div>
+                      <span id="barCount${star}" style="width:20px;text-align:right;">${count}</span>
+                    </div>
+                  `;
+                }).join("")}
+              </div>
+            </div>
+
+            <!-- Feedback Submission Form -->
+            <div style="background:rgba(0,0,0,0.3);border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:24px;margin-bottom:28px;">
+              <h4 style="font-size:1.2rem;color:var(--accent-gold);margin-bottom:6px;">✍️ Submit Your Event Feedback</h4>
+              <p class="small-muted" style="margin-bottom:16px;">Attended ${event.title}? Rate your experience to help calculate the official score.</p>
+
+              <form id="feedbackForm" onsubmit="handleFeedbackSubmit(event, '${event.id}', '${event.title}')">
+                <div class="form-row">
+                  <label>Overall Experience Rating *</label>
+                  <div class="star-rating-input">
+                    <span data-val="1" onclick="selectRating(1)" class="active">★</span>
+                    <span data-val="2" onclick="selectRating(2)" class="active">★</span>
+                    <span data-val="3" onclick="selectRating(3)" class="active">★</span>
+                    <span data-val="4" onclick="selectRating(4)" class="active">★</span>
+                    <span data-val="5" onclick="selectRating(5)" class="active">★</span>
+                  </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                  <div class="form-row">
+                    <label for="fbName">Your Name *</label>
+                    <input id="fbName" type="text" required placeholder="e.g. Aarav Sharma" />
+                  </div>
+                  <div class="form-row">
+                    <label for="fbEmail">Student Email / Ticket ID *</label>
+                    <input id="fbEmail" type="text" required placeholder="name@gmail.com or ET-FUS-1234" />
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <label for="fbComment">Your Review & Suggestions *</label>
+                  <textarea id="fbComment" rows="3" required placeholder="Share what you loved most about the event (performances, sound, food, organization)..."></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-sm">⭐ Submit Rating & Review</button>
+                <div id="fbFeedbackMsg" class="form-note"></div>
+              </form>
+            </div>
+
+            <!-- Reviews Stream -->
+            <h4 style="font-size:1.15rem;color:#fff;margin-bottom:12px;">💬 Verified Student Testimonials</h4>
+            <div class="reviews-stream" id="reviewsStreamList">
+              ${feedbacks.map(f => {
+                const starsStr = "★".repeat(f.rating) + "☆".repeat(5 - f.rating);
+                return `
+                  <div class="review-card">
+                    <div class="review-card-header">
+                      <div>
+                        <span class="review-author">${f.name}</span>
+                        <span class="pill" style="font-size:0.68rem;padding:2px 6px;margin-left:6px;">Verified Attendee</span>
+                      </div>
+                      <div class="review-stars">${starsStr}</div>
+                    </div>
+                    <p class="review-text">${f.comment}</p>
+                    <div class="review-date">📅 ${f.date || 'Recent Feedback'}</div>
+                  </div>
+                `;
+              }).join("")}
+            </div>
+          </section>
+
+          <div class="details-grid">
+            <div>
+              <!-- About Card -->
+              <section class="detail-card">
+                <h3>🎪 About ${event.title}</h3>
+                <p class="text-secondary" style="line-height:1.7;">
+                  ${event.desc}
+                </p>
+              </section>
+
+              <!-- Lineup & Schedule -->
+              <section class="detail-card" id="schedule">
+                <h3>📜 Event Timeline & Schedule</h3>
+                <ul class="lineup-list">
+                  ${scheduleHtml || '<li class="small-muted">Schedule archived for this completed event.</li>'}
+                </ul>
+              </section>
+            </div>
+
+            <!-- Right Column -->
+            <aside>
+              <div class="detail-card">
+                <h4>🌟 Event Highlights</h4>
+                <ul class="highlights-list">
+                  ${highlightsHtml}
+                </ul>
+
+                <div class="capacity-bar-wrapper" style="margin-top:20px;">
+                  <div class="capacity-info">
+                    <span>${isOver ? 'Total Attendance' : 'Remaining Seats'}</span>
+                    <strong class="text-gold">${isOver ? `${stats.booked} Registered Students` : `${stats.pct}% Filled (${stats.remaining} Left)`}</strong>
+                  </div>
+                  <div class="capacity-bar">
+                    <div class="capacity-progress" style="width: ${isOver ? 100 : stats.pct}%; background: ${isOver ? '#10b981' : 'var(--gold-gradient)'};"></div>
+                  </div>
+                </div>
+
+                ${isOver ? `
+                  <div style="margin-top:20px;">
+                    <a class="btn btn-full" href="#feedbackSection" style="background:linear-gradient(135deg, #f59e0b, #d97706);color:#000;">⭐ Rate This Event</a>
+                  </div>
+                ` : `
+                  <div style="margin-top:20px;">
+                    <a class="btn btn-full" href="#register">Register for Pass</a>
+                  </div>
+                `}
+              </div>
+
+              <div class="detail-card">
+                <h4>📍 Venue & Location</h4>
+                <div class="venue-card">
+                  <div class="venue-icon">🏛️</div>
+                  <div>
+                    <strong style="color:#fff;display:block;">${event.venue}</strong>
+                    <span class="small-muted">Main Campus Facility • Organised by ${event.dept}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Official Brochure Card -->
+              <div class="detail-card" style="border: 1px solid var(--border-gold); background: rgba(212, 175, 55, 0.05);">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                  <span style="font-size:1.8rem;">📄</span>
+                  <div>
+                    <h4 style="color:var(--accent-gold);margin:0;font-size:1rem;">Official Event Brochure</h4>
+                    <p class="small-muted" style="margin:2px 0 0;font-size:0.78rem;">Full schedule, rules, guidelines & entry details</p>
+                  </div>
+                </div>
+                <button class="btn btn-sm btn-full" onclick="EventManager.downloadBrochure('${event.id}')">
+                  📥 Download PDF Brochure
+                </button>
+              </div>
+            </aside>
+          </div>
+        </main>
+      `;
+
+      bindForm("dynamicEventForm", "dynamicMsg");
+      wireGalleryModal();
+
+      if (!isOver) {
+        const countdownBox = container.querySelector("[data-countdown]");
+        if (countdownBox) {
+          const targetDate = new Date(event.date + "T" + (event.time.replace(/[^0-9:]/g, '') || "18:00") + ":00").getTime();
+          const updateCd = () => {
+            const diff = targetDate - new Date().getTime();
+            if (diff <= 0) return;
+            const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const s = Math.floor((diff % (1000 * 60)) / 1000);
+            const dEl = countdownBox.querySelector(".cd-days");
+            const hEl = countdownBox.querySelector(".cd-hours");
+            const mEl = countdownBox.querySelector(".cd-mins");
+            const sEl = countdownBox.querySelector(".cd-secs");
+            if (dEl) dEl.textContent = String(d).padStart(2, '0');
+            if (hEl) hEl.textContent = String(h).padStart(2, '0');
+            if (mEl) mEl.textContent = String(m).padStart(2, '0');
+            if (sEl) sEl.textContent = String(s).padStart(2, '0');
+          };
+          updateCd();
+          setInterval(updateCd, 1000);
+        }
+      }
+    });
+  </script>
+
+</body>
+</html>
